@@ -1,0 +1,38 @@
+[package]
+name = "fireguard"
+version = "0.1.0"
+authors = ["Bigo <bigo@crisidev.org>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "3.0.0-beta.2", features = ["std", "derive"], default-features = false }
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+crossbeam-channel = "0.4"
+eyre = { version = "0.6", default-features = false }
+lazy_static = "1.4"
+log = "0.4"
+pretty_env_logger = "0.4"
+parking_lot = { version = "0.11", features = ["deadlock_detection"] }
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.5"
+askama = "0.10"
+flexi_logger = "0.17"
+
+[dev-dependencies]
+serde_cbor = "0.11"
+pretty_assertions = "0.6"
+serial_test = "0.4"
+tempdir = "0.3"
+
+[profile.dev]
+debug = true
+
+[profile.release]
+lto = true
+
+[[bin]]
+name = "fireguard"
+test = false
+bench = false
