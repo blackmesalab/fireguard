@@ -1,0 +1,2 @@
+# fireguard
+Wireguard Trust Network
