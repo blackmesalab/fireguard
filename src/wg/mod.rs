@@ -38,7 +38,7 @@ pub struct Host {
     pub name: String,
     pub address: String,
     pub private_key: Option<String>,
-    pub listen_port: i32,
+    pub listen_port: u32,
     pub pre_up: Option<String>,
     pub post_up: Option<String>,
     pub post_down: Option<String>,
@@ -54,6 +54,6 @@ pub struct Peer {
     pub public_key: String,
     #[serde(rename = "AllowedIPs")]
     pub allowed_ips: Vec<String>,
-    pub persistent_keepalive: Option<i32>,
+    pub persistent_keepalive: Option<u32>,
     pub endpoint: Option<String>,
 }

@@ -20,6 +20,9 @@ toml = "0.5"
 askama = "0.10"
 flexi_logger = "0.17"
 serde_yaml = "0.8"
+read_input = "0.8"
+ipnet = "2.3.0"
+rand = "0.8.1"
 
 [dev-dependencies]
 serde_cbor = "0.11"
