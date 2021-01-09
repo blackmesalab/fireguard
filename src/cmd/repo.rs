@@ -1,11 +1,12 @@
 use std::fs;
+use std::io;
 use std::path::Path;
 
-use eyre::{bail, Result};
 use clap::Clap;
+use eyre::{bail, Result};
 
-use crate::shell::Shell;
 use crate::cmd::CommandLine;
+use crate::shell::Shell;
 
 /// Repo - trust repositories management
 #[derive(Clap, Debug)]
@@ -26,7 +27,7 @@ pub enum Action {
     /// Update a Fireguard trust repository
     Pull(Pull),
     /// Update a Fireguard trust repository
-    Commit(Commit)
+    Commit(Commit),
 }
 
 impl Repo {
@@ -48,22 +49,18 @@ pub struct Clone {
     /// Repository URL
     #[clap(short = 'r', long = "repository")]
     pub repository: String,
-    /// Repository Name
-    #[clap(short = 'n', long = "name")]
-    pub name: String
 }
 
 impl Clone {
     pub fn exec(&self, cmd: &CommandLine) -> Result<()> {
-        let path = Path::new(&cmd.config).join(&self.name);
+        let path = Path::new(&cmd.config).join(&self.repository);
         info!("Cloning trust repository {} in Fireguard config directory {}", self.repository, cmd.config);
-        let result = Shell::exec("git", &format!("clone {} {}", self.repository, path.display()), None);
+        let result = Shell::exec("git", &format!("clone {} {}", self.repository, path.display()), None, None, false);
         if result.success() {
-            info!("Trust repository cloned in {}:\n{}", path.display(), result.stdout());
+            info!("Trust repository cloned in {}", path.display());
             Ok(())
         } else {
-            error!("Error cloning trust repository:\n{}", result.stderr());
-            bail!("Error cloning trust repository");
+            bail!("Error cloning trust repository: {}", result.stderr());
         }
     }
 }
@@ -74,13 +71,15 @@ pub struct List {}
 
 impl List {
     pub fn exec(&self, cmd: &CommandLine) -> Result<()> {
-        let result = Shell::exec("ls", &format!("{}/", &cmd.config), None);
-        if result.success() {
-            info!("Avalilable trust repositoriers in Fireguard config directory:\n{}", result.stdout().trim_end());
-            Ok(())
-        } else {
-            error!("Error listing trust repositorires:\n{}", result.stderr());
-            bail!("Error listing trust repositories");
+        match fs::read_dir(&cmd.config) {
+            Ok(dir) => {
+                let repos = dir.map(|res| res.map(|e| e.path())).collect::<Result<Vec<_>, io::Error>>()?;
+                info!("Avalilable trust repositoriers in Fireguard config directory: {:?}", repos);
+                Ok(())
+            },
+            Err(e) => {
+                bail!("Error listing trust repositorires: {}", e);
+            }
         }
     }
 }
@@ -88,14 +87,14 @@ impl List {
 /// Delete a Fireguard trust repository
 #[derive(Clap, Debug)]
 pub struct Remove {
-    /// Repository Name
-    #[clap(short = 'n', long = "name")]
-    pub name: String,
+    /// Repository name
+    #[clap(short = 'r', long = "repository")]
+    pub repository: String,
 }
 
 impl Remove {
     pub fn exec(&self, cmd: &CommandLine) -> Result<()> {
-        let path = Path::new(&cmd.config).join(&self.name);
+        let path = Path::new(&cmd.config).join(&self.repository);
         info!("Deleting trust repository {}", path.display());
         match fs::remove_dir_all(&path) {
             Ok(_) => {
@@ -103,8 +102,7 @@ impl Remove {
                 Ok(())
             }
             Err(e) => {
-                error!("Error removing trust repository {}: {}", path.display(), e);
-                bail!("Error removing trust repository");
+                bail!("Error removing trust repository {}: {}", path.display(), e);
             }
         }
     }
@@ -113,22 +111,21 @@ impl Remove {
 /// Update a Fireguard trust repository
 #[derive(Clap, Debug)]
 pub struct Pull {
-    /// Repository Name
-    #[clap(short = 'n', long = "name")]
-    pub name: String,
+    /// Repository name
+    #[clap(short = 'r', long = "repository")]
+    pub repository: String,
 }
 
 impl Pull {
     pub fn exec(&self, cmd: &CommandLine) -> Result<()> {
-        let path = Path::new(&cmd.config).join(&self.name);
+        let path = Path::new(&cmd.config).join(&self.repository);
         info!("Updating trust repository {}", path.display());
-        let result = Shell::exec("git", "pull", Some(&format!("{}", path.display())));
+        let result = Shell::exec("gi", "pull", None, Some(&format!("{}", path.display())), false);
         if result.success() {
-            info!("Trust repository {} successfully updated:\n{}", path.display(), result.stdout().trim_end());
+            info!("Trust repository {} successfully updated:", path.display());
             Ok(())
         } else {
-            error!("Error updating trust repository {}:\n{}", path.display(), result.stderr());
-            bail!("Error updating trust repository");
+            bail!("Error updating trust repository {}: {}", path.display(), result.stderr());
         }
     }
 }
@@ -136,14 +133,14 @@ impl Pull {
 /// Commit a Fireguard trust repository
 #[derive(Clap, Debug)]
 pub struct Commit {
-    /// Repository Name
-    #[clap(short = 'n', long = "name")]
-    pub name: String,
+    /// Repository name
+    #[clap(short = 'r', long = "repository")]
+    pub repository: String,
 }
 
 impl Commit {
     pub fn exec(&self, cmd: &CommandLine) -> Result<()> {
-        let path = Path::new(&cmd.config).join(&self.name);
+        let path = Path::new(&cmd.config).join(&self.repository);
         info!("Committing trust repository {}", path.display());
         Ok(())
     }

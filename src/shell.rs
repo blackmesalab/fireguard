@@ -1,4 +1,5 @@
-use std::process::Command;
+use std::io::Write;
+use std::process::{Command, Stdio};
 
 pub struct Shell {}
 
@@ -24,22 +25,76 @@ impl ShellResult {
 }
 
 impl Shell {
-    pub fn exec(command: &str, args: &str, current_dir: Option<&str>) -> ShellResult {
-        debug!("Executing command `{} {}`", command, args);
+    pub fn exec(
+        command: &str,
+        args: &str,
+        stdin: Option<&str>,
+        current_dir: Option<&str>,
+        sentitive: bool,
+    ) -> ShellResult {
+        let cwd = current_dir.unwrap_or(".");
+        if !sentitive {
+            info!(
+                "Executing command `{} {}`, cwd: {}, stdin: {}, sentitive: {}",
+                command,
+                args,
+                cwd,
+                stdin.is_some(),
+                sentitive
+            );
+        }
         match Command::new(command)
-            .current_dir(current_dir.unwrap_or("."))
+            .current_dir(cwd)
             .args(args.split(" ").collect::<Vec<&str>>())
-            .output()
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
         {
-            Ok(output) => {
-                info!("Command {} {} success: {:?}", command, args, output.status.success());
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                debug!("Command {} {} stdout: {}", command, args, stdout);
-                let stderr = String::from_utf8_lossy(&output.stderr);
-                if !stderr.is_empty() {
-                    debug!("Command {} {} stderr: {}", command, args, stderr);
+            Ok(mut child) => {
+                if let Some(stdin) = stdin {
+                    match child.stdin.as_mut().unwrap().write_all(stdin.as_bytes()) {
+                        Ok(_) => {
+                            if !sentitive {
+                                info!(
+                                    "Written {} bytes into command {} {} STDIN:\n{}",
+                                    stdin.len(),
+                                    command,
+                                    args,
+                                    stdin
+                                )
+                            }
+                        }
+                        Err(e) => {
+                            error!("Command {} {} failed: {}", command, args, e);
+                            return ShellResult::new("", &e.to_string(), false);
+                        }
+                    }
                 }
-                ShellResult::new(&stdout, &stderr, output.status.success())
+
+                match child.wait_with_output() {
+                    Ok(output) => {
+                        let mut stdout = String::new();
+                        let mut stderr = String::new();
+                        if !output.stdout.is_empty() {
+                            stdout = String::from_utf8_lossy(&output.stdout).to_string();
+                            if !sentitive {
+                                info!("Command {} {} STDOUT:\n{}", command, args, stdout.trim());
+                            }
+                        }
+                        if !output.stderr.is_empty() {
+                            stderr = String::from_utf8_lossy(&output.stderr).to_string();
+                            if !sentitive {
+                                info!("Command {} {} STDERR:\n{}", command, args, stderr.trim());
+                            }
+                        }
+                        ShellResult::new(&stdout, &stderr, output.status.success())
+                    }
+                    Err(e) => {
+                        error!("Command {} {} failed: {}", command, args, e);
+                        ShellResult::new("", &e.to_string(), false)
+                    }
+                }
             }
             Err(e) => {
                 error!("Command {} {} failed: {}", command, args, e);
