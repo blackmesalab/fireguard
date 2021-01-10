@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fs::{self, read_to_string};
 
-use eyre::Result;
+use color_eyre::eyre::Result;
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 
@@ -10,7 +10,7 @@ pub mod key;
 #[derive(Debug, Default, Deserialize, Serialize)]
 pub struct WgConfig {
     peers: HashMap<String, Host>,
-    #[serde(skip_deserializing,skip_serializing)]
+    #[serde(skip_deserializing, skip_serializing)]
     mutex: Mutex<u32>,
 }
 

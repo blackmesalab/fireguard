@@ -1,11 +1,12 @@
-use std::fs;
 use std::io;
 use std::path::Path;
 
 use clap::Clap;
-use eyre::{bail, Result};
+use color_eyre::eyre::{bail, Result};
+use tokio::fs;
+use tokio::stream::StreamExt;
 
-use crate::cmd::CommandLine;
+use crate::cmd::Fireguard;
 use crate::shell::Shell;
 
 /// Repo - trust repositories management
@@ -31,13 +32,13 @@ pub enum Action {
 }
 
 impl Repo {
-    pub fn exec(&self, cmd: &CommandLine) -> Result<()> {
+    pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
         match self.action {
-            Action::Clone(ref action) => action.exec(cmd)?,
-            Action::List(ref action) => action.exec(cmd)?,
-            Action::Remove(ref action) => action.exec(cmd)?,
-            Action::Pull(ref action) => action.exec(cmd)?,
-            Action::Commit(ref action) => action.exec(cmd)?,
+            Action::Clone(ref action) => action.exec(fg).await?,
+            Action::List(ref action) => action.exec(fg).await?,
+            Action::Remove(ref action) => action.exec(fg).await?,
+            Action::Pull(ref action) => action.exec(fg).await?,
+            Action::Commit(ref action) => action.exec(fg).await?,
         }
         Ok(())
     }
@@ -52,10 +53,10 @@ pub struct Clone {
 }
 
 impl Clone {
-    pub fn exec(&self, cmd: &CommandLine) -> Result<()> {
-        let path = Path::new(&cmd.config).join(&self.repository);
-        info!("Cloning trust repository {} in Fireguard config directory {}", self.repository, cmd.config);
-        let result = Shell::exec("git", &format!("clone {} {}", self.repository, path.display()), None, None, false);
+    pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
+        let path = Path::new(&fg.config_dir).join(&self.repository);
+        info!("Cloning trust repository {} in Fireguard config directory {}", self.repository, fg.config_dir);
+        let result = Shell::exec("git", &format!("clone {} {}", self.repository, path.display()), None, None, false).await;
         if result.success() {
             info!("Trust repository cloned in {}", path.display());
             Ok(())
@@ -70,10 +71,10 @@ impl Clone {
 pub struct List {}
 
 impl List {
-    pub fn exec(&self, cmd: &CommandLine) -> Result<()> {
-        match fs::read_dir(&cmd.config) {
+    pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
+        match fs::read_dir(&fg.config_dir).await {
             Ok(dir) => {
-                let repos = dir.map(|res| res.map(|e| e.path())).collect::<Result<Vec<_>, io::Error>>()?;
+                let repos = dir.map(|res| res.map(|e| e.path())).collect::<Result<Vec<_>, io::Error>>().await?;
                 info!("Avalilable trust repositoriers in Fireguard config directory: {:?}", repos);
                 Ok(())
             },
@@ -93,10 +94,10 @@ pub struct Remove {
 }
 
 impl Remove {
-    pub fn exec(&self, cmd: &CommandLine) -> Result<()> {
-        let path = Path::new(&cmd.config).join(&self.repository);
+    pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
+        let path = Path::new(&fg.config_dir).join(&self.repository);
         info!("Deleting trust repository {}", path.display());
-        match fs::remove_dir_all(&path) {
+        match fs::remove_dir_all(&path).await {
             Ok(_) => {
                 info!("Deleted Fireguard trust repository {}", path.display());
                 Ok(())
@@ -117,10 +118,10 @@ pub struct Pull {
 }
 
 impl Pull {
-    pub fn exec(&self, cmd: &CommandLine) -> Result<()> {
-        let path = Path::new(&cmd.config).join(&self.repository);
+    pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
+        let path = Path::new(&fg.config_dir).join(&self.repository);
         info!("Updating trust repository {}", path.display());
-        let result = Shell::exec("gi", "pull", None, Some(&format!("{}", path.display())), false);
+        let result = Shell::exec("gi", "pull", None, Some(&format!("{}", path.display())), false).await;
         if result.success() {
             info!("Trust repository {} successfully updated:", path.display());
             Ok(())
@@ -139,8 +140,8 @@ pub struct Commit {
 }
 
 impl Commit {
-    pub fn exec(&self, cmd: &CommandLine) -> Result<()> {
-        let path = Path::new(&cmd.config).join(&self.repository);
+    pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
+        let path = Path::new(&fg.config_dir).join(&self.repository);
         info!("Committing trust repository {}", path.display());
         Ok(())
     }

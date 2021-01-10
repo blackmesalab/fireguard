@@ -7,22 +7,27 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "3.0.0-beta.2", features = ["std", "derive"], default-features = false }
+askama = "0.10"
+bollard = "0.9"
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
+clap = { version = "3.0.0-beta.2", features = ["std", "derive"], default-features = false }
 crossbeam-channel = "0.4"
-eyre = { version = "0.6", default-features = false }
+color-eyre = "0.5"
+flexi_logger = "0.17"
+ipnet = "2.3"
 lazy_static = "1.4"
 log = "0.4"
-pretty_env_logger = "0.4"
 parking_lot = { version = "0.11", features = ["deadlock_detection"] }
-serde = { version = "1.0", features = ["derive"] }
-toml = "0.5"
-askama = "0.10"
-flexi_logger = "0.17"
-serde_yaml = "0.8"
+pretty_env_logger = "0.4"
+rand = "0.8"
 read_input = "0.8"
-ipnet = "2.3.0"
-rand = "0.8.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.8"
+shiplift = { git = "https://github.com/softprops/shiplift.git", branch = "master" }
+tokio = { version = "0.2", features = ["full"] }
+toml = "0.5"
+whoami = "1.0"
+futures-util = "0.3.9"
 
 [dev-dependencies]
 serde_cbor = "0.11"

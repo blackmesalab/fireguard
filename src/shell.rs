@@ -1,5 +1,7 @@
-use std::io::Write;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
+
+use tokio::io::AsyncWriteExt;
+use tokio::process::Command;
 
 pub struct Shell {}
 
@@ -25,7 +27,7 @@ impl ShellResult {
 }
 
 impl Shell {
-    pub fn exec(
+    pub async fn exec(
         command: &str,
         args: &str,
         stdin: Option<&str>,
@@ -53,7 +55,7 @@ impl Shell {
         {
             Ok(mut child) => {
                 if let Some(stdin) = stdin {
-                    match child.stdin.as_mut().unwrap().write_all(stdin.as_bytes()) {
+                    match child.stdin.as_mut().unwrap().write_all(stdin.as_bytes()).await {
                         Ok(_) => {
                             if !sentitive {
                                 info!(
@@ -72,7 +74,7 @@ impl Shell {
                     }
                 }
 
-                match child.wait_with_output() {
+                match child.wait_with_output().await {
                     Ok(output) => {
                         let mut stdout = String::new();
                         let mut stderr = String::new();

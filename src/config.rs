@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fs::{self, read_to_string};
 use std::path::PathBuf;
 
-use eyre::Result;
+use color_eyre::eyre::Result;
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use ipnet::Ipv4Net; 

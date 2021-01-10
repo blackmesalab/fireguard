@@ -1,6 +1,6 @@
 use std::net::Ipv4Addr;
 
-use eyre::{bail, Result};
+use color_eyre::eyre::{bail, Result};
 use ipnet::Ipv4Net;
 use rand::seq::SliceRandom;
 
