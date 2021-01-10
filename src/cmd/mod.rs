@@ -31,7 +31,7 @@ impl Fireguard {
         let config = Path::new(&self.config_dir);
         if !config.is_dir() {
             bail!(
-                "Please create directory {}: mkdir -p {} && chmod {} {}",
+                "Please create directory {}: mkdir -p {} && chown {} {}",
                 self.config_dir,
                 self.config_dir,
                 whoami::username(),
