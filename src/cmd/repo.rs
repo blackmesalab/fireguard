@@ -72,10 +72,16 @@ pub struct Clone {
 impl Command for Clone {}
 impl Clone {
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
-        let path = Path::new(&fg.config_dir).join(&self.repository);
+        let repo_name = match Path::new(&self.repository).file_stem() {
+            Some(name) => name,
+            None => bail!("Unable to get repository name from url {}", self.repository)
+        };
+        let path = Path::new(&fg.config_dir);
+        let config_path = path.to_path_buf().join(repo_name);
+
         info!("Cloning trust repository {} in Fireguard config directory {}", self.repository, fg.config_dir);
         let result =
-            Shell::exec("git", &format!("clone {} {}", self.repository, path.display()), None, None, false).await;
+            Shell::exec("git", &format!("clone {} {}", self.repository, config_path.display()), None, None, false).await;
         if result.success() {
             info!("Trust repository cloned in {}", path.display());
             Ok(())
