@@ -1,0 +1,74 @@
+dist: trusty
+language: rust
+services: docker
+sudo: required
+rust:
+- nightly
+
+env:
+  global:
+    - CRATE_NAME=fireguard
+
+matrix:
+  include:
+    # Linux
+    - env: TARGET=x86_64-unknown-linux-gnu
+    - env: TARGET=x86_64-unknown-linux-musl
+    - env: TARGET=aarch64-unknown-linux-gnu DISABLE_TESTS=1
+    - env: TARGET=aarch64-unknown-linux-musl DISABLE_TESTS=1
+    - env: TARGET=arm-unknown-linux-gnueabi DISABLE_TESTS=1
+    - env: TARGET=armv7-unknown-linux-gnueabihf DISABLE_TESTS=1
+
+    # OSX
+    - env: TARGET=x86_64-apple-darwin
+      os: osx
+
+    # Windows
+    - env: TARGET=x86_64-pc-windows-gnu DISABLE_TESTS=1
+
+before_install:
+  - set -e
+  - rustup self update
+
+install:
+  - sh ci/install.sh
+  - source ~/.cargo/env || true
+
+script:
+  - bash ci/test.sh
+
+after_script: set +e
+
+before_deploy:
+  - sh ci/before_deploy.sh
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file_glob: true
+  file: $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
+  on:
+    repo: blackmesalab/fireguard
+    tags: true
+  skip_cleanup: true
+
+cache: cargo
+before_cache:
+  # Travis can't cache files that are not readable by "others"
+  - chmod -R a+r $HOME/.cargo
+
+branches:
+  only:
+    # release tags
+    - /^v\d+\.\d+\.\d+.*$/
+    - main
+
+notifications:
+  email:
+    on_success: never
+  irc:
+    channels:
+      - "chat.freenode.net##blackmesage"
+    on_success: always # default: always
+    on_failure: always # default: always
+    use_notice: true
