@@ -38,6 +38,5 @@ pub async fn run() -> Result<()> {
     info!("Running Fireguard {}", version);
     let cmd = Fireguard::parse();
     debug!("{:#?}", cmd);
-    Docker::new().await?;
     Ok(cmd.exec().await?)
 }

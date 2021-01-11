@@ -17,6 +17,8 @@ Address = {{ host.address }}
 PrivateKey = {{ host.private_key }}
 {% if host.listen_port > 0 %}ListenPort = {{ host.listen_port }}{% endif %}
 {% if host.dns %}DNS = {{ host.dns | join(sep=",") }}{% endif %}
+{% if host.fwmark > 0 %}FwMark = {{ host.fwmark }}{% endif %}
+{% if host.table > 0 %}Table = {{ host.table }}{% endif %}
 {% if host.pre_up %}PreUp = {{ host.pre_up }}{% endif %}
 {% if host.post_up %}PostUp = {{ host.post_up }}{% endif %}
 {% if host.pre_down %}PreDown = {{ host.pre_down }}{% endif %}
@@ -24,9 +26,9 @@ PrivateKey = {{ host.private_key }}
 
 {% for peer in host.peers %}# Peer {{ peer.name }}
 [Peer]
+Endpoint = {{ peer.endpoint }}
 PublicKey = {{ peer.public_key }}
-{% if peer.endpoint %}Endpoint = {{ peer.endpoint }} {% endif %}
-{% if peer.allowed_ips %}AllowedIps = {{ peer.allowed_ips | join(sep=",") }}{% endif %}
+AllowedIps = {{ peer.allowed_ips | join(sep=",") }}
 {% if peer.persistent_keepalive > 0 %}PersistentKeepalive = {{ peer.persistent_keepalive}}{% endif %}
 
 {% endfor -%}"#;
@@ -57,7 +59,7 @@ impl WgConfig {
                         x.public_key.clone(),
                         x.allowed_ips.clone(),
                         x.persistent_keepalive,
-                        x.endpoint.clone().unwrap_or(String::new()),
+                        x.endpoint.clone(),
                     )
                 })
                 .collect::<Vec<Peer>>();
@@ -72,6 +74,8 @@ impl WgConfig {
                 my_peer.pre_down.clone().unwrap_or(String::new()),
                 my_peer.post_down.clone().unwrap_or(String::new()),
                 my_peer.dns.clone().unwrap_or(Vec::new()),
+                my_peer.table.unwrap_or(0),
+                my_peer.fwmark.unwrap_or(0),
                 wg_peers,
             );
             Ok(Self { host: wg_host, mutex: Mutex::new(0) })
@@ -102,6 +106,8 @@ pub struct Host {
     pub pre_down: String,
     pub post_down: String,
     pub dns: Vec<String>,
+    pub table: u32,
+    pub fwmark: u32,
     pub peers: Vec<Peer>,
 }
 
@@ -116,9 +122,11 @@ impl Host {
         pre_down: String,
         post_down: String,
         dns: Vec<String>,
+        table: u32,
+        fwmark: u32,
         peers: Vec<Peer>,
     ) -> Self {
-        Host { name, address, private_key, listen_port, pre_up, pre_down, post_up, post_down, dns, peers }
+        Host { name, address, private_key, listen_port, pre_up, pre_down, post_up, post_down, dns, table, fwmark, peers }
     }
 }
 

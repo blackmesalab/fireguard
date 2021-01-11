@@ -25,7 +25,7 @@ pub struct Fireguard {
     #[clap(short = 'c', long = "config-dir", default_value = "/etc/fireguard")]
     pub config_dir: String,
     /// Config file
-    #[clap(short = 'C', long = "config-file", default_value = "network.toml")]
+    #[clap(short = 'C', long = "config-file", default_value = "nodes.toml")]
     pub config_file: String,
 }
 
@@ -68,10 +68,10 @@ pub trait Command {
 
     async fn load_config(&self, repository: &str, config_dir: &str, config_file: &str) -> Result<Config> {
         let path = self.config_file(repository, config_dir, config_file);
-        info!("Loading network topology from {}", path.display());
+        debug!("Loading network topology from {}", path.display());
         match Config::load(&path).await {
             Ok(hosts) => {
-                info!("Available peers in {}: {:?}", repository, hosts.peers.keys());
+                debug!("Available peers in {}: {:?}", repository, hosts.peers.keys());
                 Ok(hosts)
             }
             Err(e) => {
