@@ -1,8 +1,10 @@
 mod peer;
 mod repo;
+mod wg;
 
 use std::path::{Path, PathBuf};
 
+use async_trait::async_trait;
 use clap::Clap;
 use color_eyre::eyre::{bail, Result};
 
@@ -10,6 +12,7 @@ use crate::config::Config;
 
 use peer::Peer;
 use repo::Repo;
+use wg::Wg;
 
 /// Fireguard - wireguard autoconfiguration application
 #[derive(Clap, Debug)]
@@ -31,7 +34,7 @@ impl Fireguard {
         let config = Path::new(&self.config_dir);
         if !config.is_dir() {
             bail!(
-                "Please create directory {}: mkdir -p {} && chown {} {}",
+                "Please create directory {} as root: mkdir -p {} && chown {} {}",
                 self.config_dir,
                 self.config_dir,
                 whoami::username(),
@@ -41,6 +44,7 @@ impl Fireguard {
         match self.action {
             Action::Repo(ref action) => action.exec(self).await?,
             Action::Peer(ref action) => action.exec(self).await?,
+            Action::Wg(ref action) => action.exec(self).await?,
         }
         Ok(())
     }
@@ -52,17 +56,20 @@ pub enum Action {
     Repo(Repo),
     /// Peers management
     Peer(Peer),
+    /// Wireguard management
+    Wg(Wg),
 }
 
+#[async_trait]
 pub trait Command {
     fn config_file(&self, repository: &str, config_dir: &str, config_file: &str) -> PathBuf {
         Path::new(config_dir).join(repository).join(config_file)
     }
 
-    fn load_config(&self, repository: &str, config_dir: &str, config_file: &str) -> Result<Config> {
+    async fn load_config(&self, repository: &str, config_dir: &str, config_file: &str) -> Result<Config> {
         let path = self.config_file(repository, config_dir, config_file);
         info!("Loading network topology from {}", path.display());
-        match Config::load(&path) {
+        match Config::load(&path).await {
             Ok(hosts) => {
                 info!("Available peers in {}: {:?}", repository, hosts.peers.keys());
                 Ok(hosts)

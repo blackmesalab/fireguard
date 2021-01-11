@@ -1,14 +1,15 @@
 use std::collections::HashMap;
-use std::fs::{self, read_to_string};
 use std::path::PathBuf;
 
 use color_eyre::eyre::Result;
+use ipnet::Ipv4Net;
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
-use ipnet::Ipv4Net; 
+use tokio::fs::{self, read_to_string};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
+    pub repository: String,
     pub network: String,
     pub domain: String,
     pub peers: HashMap<String, Peer>,
@@ -19,17 +20,17 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn load(path: &PathBuf) -> Result<Self> {
-        let data = read_to_string(path)?;
+    pub async fn load(path: &PathBuf) -> Result<Self> {
+        let data = read_to_string(path).await?;
         let mut config: Config = toml::from_str(&data)?;
         config.network_addr = config.network.parse::<Ipv4Net>()?;
         Ok(config)
     }
 
-    pub fn save(&self, path: &PathBuf) -> Result<()> {
+    pub async fn save(&self, path: &PathBuf) -> Result<()> {
         let _ = self.mutex.lock();
         let data = toml::to_string(self)?;
-        fs::write(path, data)?;
+        fs::write(path, data).await?;
         Ok(())
     }
 
@@ -42,7 +43,8 @@ impl Config {
         self.peers.insert(name.to_string(), peer);
     }
 
-    pub fn remove_peer(&mut self, name: &str) -> Option<Peer>{
+    pub fn remove_peer(&mut self, name: &str) -> Option<Peer> {
+        let _ = self.mutex.lock();
         self.peers.remove(name)
     }
 
@@ -61,6 +63,10 @@ pub struct Peer {
     pub allowed_ips: Vec<String>,
     pub persistent_keepalive: u32,
     pub endpoint: Option<String>,
+    pub pre_up: Option<String>,
+    pub post_up: Option<String>,
+    pub post_down: Option<String>,
+    pub dns: Option<Vec<String>>,
 }
 
 impl Peer {
@@ -73,6 +79,10 @@ impl Peer {
         allowed_ips: &Vec<String>,
         persistent_keepalive: u32,
         endpoint: Option<String>,
+        pre_up: Option<String>,
+        post_up: Option<String>,
+        post_down: Option<String>,
+        dns: Option<Vec<String>>,
     ) -> Self {
         Peer {
             username: username.to_string(),
@@ -83,6 +93,10 @@ impl Peer {
             allowed_ips: allowed_ips.clone(),
             persistent_keepalive,
             endpoint,
+            pre_up,
+            post_up,
+            post_down,
+            dns,
         }
     }
 }

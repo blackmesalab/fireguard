@@ -32,7 +32,7 @@ pub enum Action {
 impl Command for Peer {}
 impl Peer {
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
-        let config = self.load_config(&self.repository, &fg.config_dir, &fg.config_file)?;
+        let config = self.load_config(&self.repository, &fg.config_dir, &fg.config_file).await?;
         match self.action {
             Action::List(ref action) => action.exec(fg, config, &self.repository).await?,
             Action::Add(ref action) => action.exec(fg, config, &self.repository).await?,
@@ -54,7 +54,7 @@ pub struct List {
 impl Command for List {}
 impl List {
     pub async fn exec(&self, fg: &Fireguard, _config: Config, repository: &str) -> Result<()> {
-        let config = self.load_config(repository, &fg.config_dir, &fg.config_file)?;
+        let config = self.load_config(repository, &fg.config_dir, &fg.config_file).await?;
         info!("Available peers in {}: {:?}", repository, config.peers.keys());
         Ok(())
     }
@@ -130,10 +130,14 @@ impl Add {
             self.allowed_ips.as_ref().unwrap_or(&Vec::new()),
             self.keep_alive,
             self.endpoint.clone(),
+            None,
+            None,
+            None,
+            None,
         );
         debug!("Peer {}-{} will be added to repository {}:\n{:#?}", self.username, self.peername, repository, peer);
         config.add_peer(&format!("{}-{}", self.username, self.peername), peer);
-        config.save(&self.config_file(repository, &fg.config_dir, &fg.config_file))?;
+        config.save(&self.config_file(repository, &fg.config_dir, &fg.config_file)).await?;
         Ok(())
     }
 }
@@ -182,7 +186,7 @@ impl Info {
         let peer = config.get_peer(&format!("{}-{}", self.username, self.peername));
         match peer {
             Some(peer) => {
-                config.save(&self.config_file(repository, &fg.config_dir, &fg.config_file))?;
+                config.save(&self.config_file(repository, &fg.config_dir, &fg.config_file)).await?;
                 info!("Peer {}-{}, repository {}:\n{:#?}", self.username, self.peername, repository, peer);
             }
             None => {

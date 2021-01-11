@@ -6,7 +6,7 @@ use color_eyre::eyre::{bail, Result};
 use tokio::fs;
 use tokio::stream::StreamExt;
 
-use crate::cmd::Fireguard;
+use crate::cmd::{Command, Fireguard};
 use crate::shell::Shell;
 
 /// Repo - trust repositories management
@@ -31,8 +31,25 @@ pub enum Action {
     Commit(Commit),
 }
 
+impl Command for Repo {}
 impl Repo {
+    async fn pre_checks(&self, fg: &Fireguard) -> Result<()> {
+        let config = Path::new(&fg.config_dir);
+        if config.is_dir() {
+            Ok(())
+        } else {
+            bail!(
+                "Please create Fireguar config directory {} as root: mkdir -p {} && chown {} {}",
+                fg.config_dir,
+                fg.config_dir,
+                whoami::username(),
+                fg.config_dir
+            );
+        }
+    }
+
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
+        self.pre_checks(fg).await?;
         match self.action {
             Action::Clone(ref action) => action.exec(fg).await?,
             Action::List(ref action) => action.exec(fg).await?,
@@ -52,11 +69,13 @@ pub struct Clone {
     pub repository: String,
 }
 
+impl Command for Clone {}
 impl Clone {
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
         let path = Path::new(&fg.config_dir).join(&self.repository);
         info!("Cloning trust repository {} in Fireguard config directory {}", self.repository, fg.config_dir);
-        let result = Shell::exec("git", &format!("clone {} {}", self.repository, path.display()), None, None, false).await;
+        let result =
+            Shell::exec("git", &format!("clone {} {}", self.repository, path.display()), None, None, false).await;
         if result.success() {
             info!("Trust repository cloned in {}", path.display());
             Ok(())
@@ -70,6 +89,7 @@ impl Clone {
 #[derive(Clap, Debug)]
 pub struct List {}
 
+impl Command for List {}
 impl List {
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
         match fs::read_dir(&fg.config_dir).await {
@@ -77,7 +97,7 @@ impl List {
                 let repos = dir.map(|res| res.map(|e| e.path())).collect::<Result<Vec<_>, io::Error>>().await?;
                 info!("Avalilable trust repositoriers in Fireguard config directory: {:?}", repos);
                 Ok(())
-            },
+            }
             Err(e) => {
                 bail!("Error listing trust repositorires: {}", e);
             }
@@ -93,6 +113,7 @@ pub struct Remove {
     pub repository: String,
 }
 
+impl Command for Remove {}
 impl Remove {
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
         let path = Path::new(&fg.config_dir).join(&self.repository);
@@ -117,6 +138,7 @@ pub struct Pull {
     pub repository: String,
 }
 
+impl Command for Pull {}
 impl Pull {
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
         let path = Path::new(&fg.config_dir).join(&self.repository);
@@ -139,6 +161,7 @@ pub struct Commit {
     pub repository: String,
 }
 
+impl Command for Commit {}
 impl Commit {
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
         let path = Path::new(&fg.config_dir).join(&self.repository);

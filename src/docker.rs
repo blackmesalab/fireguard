@@ -1,12 +1,13 @@
 use bollard::Docker as Ballard;
+use color_eyre::eyre::{eyre, Result};
 
 pub struct Docker {
     inner: Ballard,
 }
 
 impl Docker {
-    pub async fn new() -> Option<Self> {
-        match Ballard::connect_with_unix_defaults() {
+    pub async fn new() -> Result<Self> {
+        match Ballard::connect_with_local_defaults() {
             Ok(d) => match d.version().await {
                 Ok(info) => {
                     info!(
@@ -16,16 +17,14 @@ impl Docker {
                         info.os.unwrap_or("unknown".to_string())
                     );
                     let docker = Self { inner: d };
-                    Some(docker)
+                    Ok(docker)
                 }
-                Err(_) => {
-                    warn!("Docker unavailable on this host");
-                    None
+                Err(e) => {
+                    Err(eyre!("Docker unavailable on this host: {}", e))
                 }
             },
-            Err(_) => {
-                warn!("Docker unavailable on this host");
-                None
+            Err(e) => {
+                Err(eyre!("Docker unavailable on this host: {}", e))
             }
         }
     }
