@@ -79,7 +79,10 @@ impl Clone {
         let path = Path::new(&fg.config_dir);
         let config_path = path.to_path_buf().join(repo_name);
 
-        info!("Cloning trust repository {} in Fireguard config directory {}", self.repository, fg.config_dir);
+        info!("Creating Fireguard repository directory {}", config_path.display());
+        fs::create_dir_all(&config_path).await?;
+
+        info!("Cloning trust repository {} in Fireguard config directory {}", self.repository, config_path.display());
         let result =
             Shell::exec("git", &format!("clone {} {}", self.repository, config_path.display()), None, None, false).await;
         if result.success() {
