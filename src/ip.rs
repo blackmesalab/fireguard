@@ -15,21 +15,17 @@ pub struct IpPool {
 impl IpPool {
     pub fn new(network: &str, peers: Vec<String>) -> Result<Self> {
         let subnet = network.parse::<Ipv4Net>()?;
-        info!(
-            "Creating new IPv4 pool for subnet {}, capacity {} out of {}",
-            network,
-            peers.len(),
-            subnet.prefix_len()
-        );
-        let used_list: Vec<Ipv4Addr> = peers.iter().map(|x| {
-            match x.parse::<Ipv4Net>() {
+        info!("Creating new IPv4 pool for subnet {}, capacity {} out of {}", network, peers.len(), subnet.prefix_len());
+        let used_list: Vec<Ipv4Addr> = peers
+            .iter()
+            .map(|x| match x.parse::<Ipv4Net>() {
                 Ok(ip) => ip.addr(),
                 Err(e) => {
                     error!("Unable to parse peer IPv4 address {:?}: {}", x, e);
                     "127.0.0.1/8".parse::<Ipv4Net>().unwrap().addr()
                 }
-            }
-        }).collect();
+            })
+            .collect();
         debug!("IPv4 pool used list: {:?}", used_list);
         let mut free_list: Vec<Ipv4Addr> = subnet.hosts().collect::<Vec<Ipv4Addr>>();
         free_list.retain(|x| !used_list.contains(x));

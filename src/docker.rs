@@ -19,13 +19,9 @@ impl Docker {
                     let docker = Self { inner: d };
                     Ok(docker)
                 }
-                Err(e) => {
-                    Err(eyre!("Docker unavailable on this host: {}", e))
-                }
+                Err(e) => Err(eyre!("Docker unavailable on this host: {}", e)),
             },
-            Err(e) => {
-                Err(eyre!("Docker unavailable on this host: {}", e))
-            }
+            Err(e) => Err(eyre!("Docker unavailable on this host: {}", e)),
         }
     }
 }

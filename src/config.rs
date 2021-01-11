@@ -65,8 +65,10 @@ pub struct Peer {
     pub endpoint: Option<String>,
     pub pre_up: Option<String>,
     pub post_up: Option<String>,
+    pub pre_down: Option<String>,
     pub post_down: Option<String>,
     pub dns: Option<Vec<String>>,
+    pub mtu: u32,
 }
 
 impl Peer {
@@ -79,8 +81,10 @@ impl Peer {
         allowed_ips: &Vec<String>,
         persistent_keepalive: u32,
         endpoint: Option<String>,
+        mtu: u32,
         pre_up: Option<String>,
         post_up: Option<String>,
+        pre_down: Option<String>,
         post_down: Option<String>,
         dns: Option<Vec<String>>,
     ) -> Self {
@@ -93,7 +97,9 @@ impl Peer {
             allowed_ips: allowed_ips.clone(),
             persistent_keepalive,
             endpoint,
+            mtu,
             pre_up,
+            pre_down,
             post_up,
             post_down,
             dns,

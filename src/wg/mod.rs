@@ -1,7 +1,7 @@
 pub mod key;
 
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::PathBuf;
 
 use color_eyre::eyre::{bail, Result};
 use parking_lot::Mutex;
@@ -15,7 +15,6 @@ use crate::config::Peer as ConfigPeer;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct WgConfig {
     host: Host,
-    peers: Vec<Peer>,
     #[serde(skip_deserializing, skip_serializing)]
     mutex: Mutex<u8>,
 }
@@ -31,7 +30,7 @@ impl WgConfig {
         let peername = format!("{}-{}", username, peername);
         let my_peer = peers.get(&peername);
         if let Some(my_peer) = my_peer {
-            let wg_peers = peers
+            let mut wg_peers = peers
                 .values()
                 .map(|x| {
                     Peer::new(
@@ -42,7 +41,8 @@ impl WgConfig {
                         x.endpoint.clone().unwrap_or(String::new()),
                     )
                 })
-                .collect();
+                .collect::<Vec<Peer>>();
+            wg_peers.retain(|x| x.name != peername);
             let wg_host = Host::new(
                 peername,
                 my_peer.address.clone(),
@@ -50,23 +50,22 @@ impl WgConfig {
                 my_peer.listen_port,
                 my_peer.pre_up.clone().unwrap_or(String::new()),
                 my_peer.post_up.clone().unwrap_or(String::new()),
+                my_peer.pre_down.clone().unwrap_or(String::new()),
                 my_peer.post_down.clone().unwrap_or(String::new()),
                 my_peer.dns.clone().unwrap_or(Vec::new()),
-                Vec::new(),
+                wg_peers,
             );
-            Ok(Self { host: wg_host, peers: wg_peers, mutex: Mutex::new(0) })
+            Ok(Self { host: wg_host, mutex: Mutex::new(0) })
         } else {
             bail!("Unable to find peer {} for repository {}", peername, repository)
         }
     }
 
-    pub async fn render(&self, config_path: &str, username: &str, peername: &str) -> Result<()> {
-        let wg_tmpl = "templates/*.txt".to_string();
-        let config = Path::new(config_path).join(&format!("{}-{}", username, peername));
-        info!("Rendering Wireguard configuration on {}", config.display());
-        let wg_tera = Tera::new(&wg_tmpl)?;
-        let wg_config = wg_tera.render("templates/wireguard.txt", &Context::from_serialize(self)?)?;
-        let mut file = File::open(&config).await?;
+    pub async fn render(&self, config_path: &PathBuf) -> Result<()> {
+        info!("Rendering Wireguard configuration on {}", config_path.display());
+        let wg_tera = Tera::new(&"templates/*.txt")?;
+        let wg_config = wg_tera.render("wireguard.txt", &Context::from_serialize(self)?)?;
+        let mut file = File::create(config_path).await?;
         file.write_all(&wg_config.as_bytes()).await?;
         Ok(())
     }
@@ -80,6 +79,7 @@ pub struct Host {
     pub listen_port: u32,
     pub pre_up: String,
     pub post_up: String,
+    pub pre_down: String,
     pub post_down: String,
     pub dns: Vec<String>,
     pub peers: Vec<Peer>,
@@ -93,11 +93,12 @@ impl Host {
         listen_port: u32,
         pre_up: String,
         post_up: String,
+        pre_down: String,
         post_down: String,
         dns: Vec<String>,
         peers: Vec<Peer>,
     ) -> Self {
-        Host { name, address, private_key, listen_port, pre_up, post_up, post_down, dns, peers }
+        Host { name, address, private_key, listen_port, pre_up, pre_down, post_up, post_down, dns, peers }
     }
 }
 
