@@ -5,16 +5,12 @@ services: docker
 os: linux
 rust:
   - stable
-  - nightly
 
 env:
   global:
     - CRATE_NAME=fireguard
 
 jobs:
-  allow_failures:
-    - rust: nightly
-  fast_finish: true
   include:
     # Linux
     - env: TARGET=x86_64-unknown-linux-gnu
