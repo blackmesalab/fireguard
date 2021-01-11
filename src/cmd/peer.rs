@@ -4,7 +4,7 @@ use color_eyre::eyre::Result;
 use crate::cmd::{Command, Fireguard};
 use crate::config::{Config, Peer as ConfigPeer};
 use crate::ip::IpPool;
-use crate::wg::key::WgKeys;
+use crate::wg::WgKeys;
 
 /// Peer - peers management for a trust repository
 #[derive(Clap, Debug)]
