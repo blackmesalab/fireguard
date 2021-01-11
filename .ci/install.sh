@@ -4,8 +4,6 @@
 set -ex
 
 main() {
-    sudo apt-get update && sudo apt-get -y install libssl-dev
-
     local target=
     local tag=
     if [ "${TRAVIS_OS_NAME}" = linux ]; then

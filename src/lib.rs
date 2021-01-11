@@ -13,8 +13,6 @@ extern crate pretty_env_logger;
 extern crate rand;
 extern crate read_input;
 extern crate serde;
-extern crate serde_yaml;
-extern crate shiplift;
 extern crate tera;
 extern crate toml;
 extern crate whoami;
