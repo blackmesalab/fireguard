@@ -1,9 +1,9 @@
-dist: trusty
+dist: focal
 language: rust
 services: docker
 os: linux
 rust:
-- nightly
+- stable
 
 env:
   global:
@@ -68,7 +68,7 @@ notifications:
     on_success: never
   irc:
     channels:
-      - "chat.freenode.net##blackmesage"
-    on_success: always # default: always
-    on_failure: always # default: always
+      - "chat.freenode.net##blackmesa"
+    on_success: always
+    on_failure: always
     use_notice: true
