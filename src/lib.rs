@@ -36,8 +36,8 @@ pub async fn run() -> Result<()> {
     pretty_env_logger::init();
     let version = env!("CARGO_PKG_VERSION");
     info!("Running Fireguard {}", version);
-    Docker::new().await?;
     let cmd = Fireguard::parse();
     debug!("{:#?}", cmd);
+    Docker::new().await?;
     Ok(cmd.exec().await?)
 }
