@@ -1,3 +1,4 @@
+mod dns;
 mod peer;
 mod repo;
 mod wg;
@@ -10,6 +11,7 @@ use color_eyre::eyre::{bail, Result};
 
 use crate::config::Config;
 
+use dns::Dns;
 use peer::Peer;
 use repo::Repo;
 use wg::Wg;
@@ -45,6 +47,7 @@ impl Fireguard {
             Action::Repo(ref action) => action.exec(self).await?,
             Action::Peer(ref action) => action.exec(self).await?,
             Action::Wg(ref action) => action.exec(self).await?,
+            Action::Dns(ref action) => action.exec(self).await?,
         }
         Ok(())
     }
@@ -58,6 +61,8 @@ pub enum Action {
     Peer(Peer),
     /// Wireguard management
     Wg(Wg),
+    /// DNS management
+    Dns(Dns),
 }
 
 #[async_trait]

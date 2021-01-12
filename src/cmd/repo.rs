@@ -15,6 +15,9 @@ pub struct Repo {
     /// Repo subcommands
     #[clap(subcommand)]
     pub action: Action,
+    /// Repository name
+    #[clap(short = 'r', long = "repository", default_value = "")]
+    pub repository: String,
 }
 
 #[derive(Clap, Debug)]
@@ -51,11 +54,11 @@ impl Repo {
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
         self.pre_checks(fg).await?;
         match self.action {
-            Action::Clone(ref action) => action.exec(fg).await?,
+            Action::Clone(ref action) => action.exec(fg, &self.repository).await?,
             Action::List(ref action) => action.exec(fg).await?,
-            Action::Remove(ref action) => action.exec(fg).await?,
-            Action::Pull(ref action) => action.exec(fg).await?,
-            Action::Commit(ref action) => action.exec(fg).await?,
+            Action::Remove(ref action) => action.exec(fg, &self.repository).await?,
+            Action::Pull(ref action) => action.exec(fg, &self.repository).await?,
+            Action::Commit(ref action) => action.exec(fg, &self.repository).await?,
         }
         Ok(())
     }
@@ -63,18 +66,14 @@ impl Repo {
 
 /// Clone a new repository with the chain of trust
 #[derive(Clap, Debug)]
-pub struct Clone {
-    /// Repository URL
-    #[clap(short = 'r', long = "repository")]
-    pub repository: String,
-}
+pub struct Clone {}
 
 impl Command for Clone {}
 impl Clone {
-    pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
-        let repo_name = match Path::new(&self.repository).file_stem() {
+    pub async fn exec(&self, fg: &Fireguard, repository: &str) -> Result<()> {
+        let repo_name = match Path::new(repository).file_stem() {
             Some(name) => name,
-            None => bail!("Unable to get repository name from url {}", self.repository),
+            None => bail!("Unable to get repository name from url {}", repository),
         };
         let path = Path::new(&fg.config_dir);
         let config_path = path.to_path_buf().join(repo_name);
@@ -82,9 +81,8 @@ impl Clone {
         info!("Creating Fireguard repository directory {}", config_path.display());
         fs::create_dir_all(&config_path).await?;
 
-        info!("Cloning trust repository {} in Fireguard config directory {}", self.repository, config_path.display());
-        let result =
-            Shell::exec("git", &format!("clone {} {}", self.repository, config_path.display()), None, false).await;
+        info!("Cloning trust repository {} in Fireguard config directory {}", repository, config_path.display());
+        let result = Shell::exec("git", &format!("clone {} {}", repository, config_path.display()), None, false).await;
         if result.success() {
             info!("Trust repository cloned in {}", path.display());
             Ok(())
@@ -116,16 +114,12 @@ impl List {
 
 /// Delete a Fireguard trust repository
 #[derive(Clap, Debug)]
-pub struct Remove {
-    /// Repository name
-    #[clap(short = 'r', long = "repository")]
-    pub repository: String,
-}
+pub struct Remove {}
 
 impl Command for Remove {}
 impl Remove {
-    pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
-        let path = Path::new(&fg.config_dir).join(&self.repository);
+    pub async fn exec(&self, fg: &Fireguard, repository: &str) -> Result<()> {
+        let path = Path::new(&fg.config_dir).join(repository);
         info!("Deleting trust repository {}", path.display());
         match fs::remove_dir_all(&path).await {
             Ok(_) => {
@@ -141,16 +135,12 @@ impl Remove {
 
 /// Update a Fireguard trust repository
 #[derive(Clap, Debug)]
-pub struct Pull {
-    /// Repository name
-    #[clap(short = 'r', long = "repository")]
-    pub repository: String,
-}
+pub struct Pull {}
 
 impl Command for Pull {}
 impl Pull {
-    pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
-        let path = Path::new(&fg.config_dir).join(&self.repository);
+    pub async fn exec(&self, fg: &Fireguard, repository: &str) -> Result<()> {
+        let path = Path::new(&fg.config_dir).join(repository);
         info!("Updating trust repository {}", path.display());
         let result = Shell::exec("git", "pull", Some(&format!("{}", path.display())), false).await;
         if result.success() {
@@ -164,16 +154,12 @@ impl Pull {
 
 /// Commit a Fireguard trust repository
 #[derive(Clap, Debug)]
-pub struct Commit {
-    /// Repository name
-    #[clap(short = 'r', long = "repository")]
-    pub repository: String,
-}
+pub struct Commit {}
 
 impl Command for Commit {}
 impl Commit {
-    pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
-        let path = Path::new(&fg.config_dir).join(&self.repository);
+    pub async fn exec(&self, fg: &Fireguard, repository: &str) -> Result<()> {
+        let path = Path::new(&fg.config_dir).join(repository);
         info!("Committing trust repository {}", path.display());
         Ok(())
     }

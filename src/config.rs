@@ -53,7 +53,7 @@ impl Config {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
 pub struct Peer {
     pub username: String,
     pub peername: String,
