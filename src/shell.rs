@@ -85,7 +85,7 @@ impl Shell {
     }
 
     pub fn runnable(name: &str) -> bool {
-        match Command::new(name).spawn() {
+        match Command::new(name).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn() {
             Ok(_) => true,
             Err(_) => {
                 error!("Unable to find runnable command {}", name);

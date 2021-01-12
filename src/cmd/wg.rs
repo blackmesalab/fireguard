@@ -26,6 +26,8 @@ pub enum Action {
     Up(Up),
     /// Stop the Wireguard userspace tunnel
     Down(Down),
+    /// Show the Wireguard userspace tunnel status and stats
+    Status(Status),
 }
 
 impl Wg {
@@ -49,6 +51,7 @@ impl Wg {
             Action::Render(ref action) => action.exec(fg, &self.repository).await?,
             Action::Up(ref action) => action.exec(fg, &self.repository).await?,
             Action::Down(ref action) => action.exec(fg, &self.repository).await?,
+            Action::Status(ref action) => action.exec(fg, &self.repository).await?,
         }
         Ok(())
     }
@@ -102,31 +105,11 @@ impl Render {
 
 /// Start the Wireguard tunnel for the current host after rendering the config
 #[derive(Clap, Debug)]
-pub struct Up {
-    /// User name
-    #[clap(short = 'u', long = "username")]
-    pub username: String,
-    /// Peer name
-    #[clap(short = 'p', long = "peername")]
-    pub peername: String,
-    /// Private key
-    #[clap(short = 'P', long = "private-key")]
-    pub private_key: String,
-    /// Config file path
-    #[clap(short = 'c', long = "config-dir", default_value = "/etc/wireguard")]
-    pub config_dir: String,
-}
+pub struct Up {}
 
 impl Command for Up {}
 impl Up {
-    pub async fn exec(&self, fg: &Fireguard, repository: &str) -> Result<()> {
-        let render = Render {
-            username: self.username.clone(),
-            peername: self.peername.clone(),
-            private_key: self.private_key.clone(),
-            config_dir: self.config_dir.clone(),
-        };
-        render.exec(fg, repository).await?;
+    pub async fn exec(&self, _fg: &Fireguard, repository: &str) -> Result<()> {
         let bt = BoringTun::new(repository)?;
         Ok(bt.up().await?)
     }
@@ -134,20 +117,7 @@ impl Up {
 
 /// Stop the Wireguard tunnel for the current host
 #[derive(Clap, Debug)]
-pub struct Down {
-    /// User name
-    #[clap(short = 'u', long = "username")]
-    pub username: String,
-    /// Peer name
-    #[clap(short = 'p', long = "peername")]
-    pub peername: String,
-    /// Private key
-    #[clap(short = 'P', long = "private-key")]
-    pub private_key: String,
-    /// Config file path
-    #[clap(short = 'c', long = "config-dir", default_value = "/etc/wireguard")]
-    pub config_dir: String,
-}
+pub struct Down {}
 
 impl Command for Down {}
 impl Down {
@@ -156,3 +126,17 @@ impl Down {
         Ok(bt.down().await?)
     }
 }
+
+/// Start the Wireguard tunnel for the current host after rendering the config
+#[derive(Clap, Debug)]
+pub struct Status {}
+
+impl Command for Status {}
+impl Status {
+    pub async fn exec(&self, _fg: &Fireguard, repository: &str) -> Result<()> {
+        let bt = BoringTun::new(repository)?;
+        bt.status().await?;
+        Ok(())
+    }
+}
+
