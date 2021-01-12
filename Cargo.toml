@@ -37,7 +37,7 @@ tempdir = "0.3"
 debug = true
 
 [profile.release]
-lto = true
+debug = true
 
 [[bin]]
 name = "fireguard"

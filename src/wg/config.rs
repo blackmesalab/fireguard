@@ -10,7 +10,7 @@ use tokio::io::AsyncWriteExt;
 
 use crate::config::Peer as ConfigPeer;
 
-static WIREGARD_CONFIG_TMPL: &str = r#"# {{ host.name }} wireguard configuration
+static WIREGARD_CONFIG_TMPL: &str = r#"# {{ host.repository }} - {{ host.name }} wireguard configuration
 # Note: this file is managed by fireguard (https://github.com/blackmesalab/fireguard)
 [Interface]
 Address = {{ host.address }}
@@ -26,7 +26,7 @@ PrivateKey = {{ host.private_key }}
 
 {% for peer in host.peers %}# Peer {{ peer.name }}
 [Peer]
-Endpoint = {{ peer.endpoint }}
+Endpoint = {{ peer.endpoint }}:{{ peer.listen_port }}
 PublicKey = {{ peer.public_key }}
 AllowedIps = {{ peer.allowed_ips | join(sep=",") }}
 {% if peer.persistent_keepalive > 0 %}PersistentKeepalive = {{ peer.persistent_keepalive}}{% endif %}
@@ -57,6 +57,7 @@ impl WgConfig {
                     Peer::new(
                         format!("{}-{}", x.username, x.peername),
                         x.public_key.clone(),
+                        x.listen_port,
                         x.allowed_ips.clone(),
                         x.persistent_keepalive,
                         x.endpoint.clone(),
@@ -65,6 +66,7 @@ impl WgConfig {
                 .collect::<Vec<Peer>>();
             wg_peers.retain(|x| x.name != peername);
             let wg_host = Host::new(
+                repository.to_string(),
                 peername,
                 my_peer.address.clone(),
                 private_key.to_string(),
@@ -97,6 +99,7 @@ impl WgConfig {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Host {
+    pub repository: String,
     pub name: String,
     pub address: String,
     pub private_key: String,
@@ -113,6 +116,7 @@ pub struct Host {
 
 impl Host {
     pub fn new(
+        repository: String,
         name: String,
         address: String,
         private_key: String,
@@ -126,7 +130,7 @@ impl Host {
         fwmark: u32,
         peers: Vec<Peer>,
     ) -> Self {
-        Host { name, address, private_key, listen_port, pre_up, pre_down, post_up, post_down, dns, table, fwmark, peers }
+        Host { repository, name, address, private_key, listen_port, pre_up, pre_down, post_up, post_down, dns, table, fwmark, peers }
     }
 }
 
@@ -134,6 +138,7 @@ impl Host {
 pub struct Peer {
     pub name: String,
     pub public_key: String,
+    pub listen_port: u32,
     pub allowed_ips: Vec<String>,
     pub persistent_keepalive: u32,
     pub endpoint: String,
@@ -143,10 +148,11 @@ impl Peer {
     pub fn new(
         name: String,
         public_key: String,
+        listen_port: u32,
         allowed_ips: Vec<String>,
         persistent_keepalive: u32,
         endpoint: String,
     ) -> Self {
-        Self { name, public_key, allowed_ips, persistent_keepalive, endpoint }
+        Self { name, public_key, listen_port, allowed_ips, persistent_keepalive, endpoint }
     }
 }

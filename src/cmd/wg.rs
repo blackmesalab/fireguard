@@ -85,7 +85,7 @@ impl Render {
     pub async fn exec(&self, fg: &Fireguard, repository: &str) -> Result<()> {
         self.pre_checks(fg).await?;
         let config = self.load_config(repository, &fg.config_dir, &fg.config_file).await?;
-        let wg_config_path = Path::new(&self.config_dir).join(&format!("{}-{}", &self.username, &self.peername));
+        let wg_config_path = Path::new(&self.config_dir).join(&format!("{}.conf", repository));
         let wg_config = WgConfig::new(config.peers, repository, &self.username, &self.peername, &self.private_key)?;
         wg_config.render(&wg_config_path).await?;
         let data = read_to_string(&wg_config_path).await?;
