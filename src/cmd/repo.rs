@@ -84,8 +84,7 @@ impl Clone {
 
         info!("Cloning trust repository {} in Fireguard config directory {}", self.repository, config_path.display());
         let result =
-            Shell::exec("git", &format!("clone {} {}", self.repository, config_path.display()), None, None, false)
-                .await;
+            Shell::exec("git", &format!("clone {} {}", self.repository, config_path.display()), None, false).await;
         if result.success() {
             info!("Trust repository cloned in {}", path.display());
             Ok(())
@@ -153,7 +152,7 @@ impl Pull {
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
         let path = Path::new(&fg.config_dir).join(&self.repository);
         info!("Updating trust repository {}", path.display());
-        let result = Shell::exec("git", "pull", None, Some(&format!("{}", path.display())), false).await;
+        let result = Shell::exec("git", "pull", Some(&format!("{}", path.display())), false).await;
         if result.success() {
             info!("Trust repository {} successfully updated:", path.display());
             Ok(())
