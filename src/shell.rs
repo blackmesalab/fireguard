@@ -75,13 +75,23 @@ impl Shell {
         args: &str,
         current_dir: &str,
         stdin: bool,
-        env: &HashMap<String, String>,
+        env: &HashMap<&str, &str>,
         sensitive: bool,
     ) {
         info!(
             "Executing command `{} {}`, cwd: {}, stdin: {}, env: {:?}, sentitive: {}",
             command, args, current_dir, stdin, env, sensitive
         );
+    }
+
+    pub fn runnable(name: &str) -> bool {
+        match Command::new(name).spawn() {
+            Ok(_) => true,
+            Err(_) => {
+                error!("Unable to find runnable command {}", name);
+                false
+            }
+        }
     }
 
     pub async fn exec(command: &str, args: &str, current_dir: Option<&str>, sensitive: bool) -> ShellResult {
@@ -107,7 +117,7 @@ impl Shell {
         command: &str,
         args: &str,
         current_dir: Option<&str>,
-        env: HashMap<String, String>,
+        env: HashMap<&str, &str>,
         sensitive: bool,
     ) -> ShellResult {
         let shell = Shell {};
@@ -166,7 +176,7 @@ impl Shell {
         args: &str,
         current_dir: Option<&str>,
         stdin: &str,
-        env: HashMap<String, String>,
+        env: HashMap<&str, &str>,
         sensitive: bool,
     ) -> ShellResult {
         let shell = Shell {};

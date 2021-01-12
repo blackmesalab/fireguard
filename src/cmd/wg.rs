@@ -5,7 +5,7 @@ use color_eyre::eyre::{bail, Result};
 use tokio::fs::read_to_string;
 
 use crate::cmd::{Command, Fireguard};
-use crate::wg::WgConfig;
+use crate::wg::{BoringTun, WgConfig};
 
 /// Wg - Wireguard management
 #[derive(Clap, Debug)]
@@ -22,6 +22,10 @@ pub struct Wg {
 pub enum Action {
     /// Render the Wireguard configuration for the current host
     Render(Render),
+    /// Start the Wireguard userspace tunnel
+    Up(Up),
+    /// Stop the Wireguard userspace tunnel
+    Down(Down),
 }
 
 impl Wg {
@@ -43,6 +47,8 @@ impl Wg {
         self.pre_checks(fg).await?;
         match self.action {
             Action::Render(ref action) => action.exec(fg, &self.repository).await?,
+            Action::Up(ref action) => action.exec(fg, &self.repository).await?,
+            Action::Down(ref action) => action.exec(fg, &self.repository).await?,
         }
         Ok(())
     }
@@ -91,5 +97,62 @@ impl Render {
         let data = read_to_string(&wg_config_path).await?;
         info!("Wireguard configuration written to {}:\n{}", wg_config_path.display(), data.trim());
         Ok(())
+    }
+}
+
+/// Start the Wireguard tunnel for the current host after rendering the config
+#[derive(Clap, Debug)]
+pub struct Up {
+    /// User name
+    #[clap(short = 'u', long = "username")]
+    pub username: String,
+    /// Peer name
+    #[clap(short = 'p', long = "peername")]
+    pub peername: String,
+    /// Private key
+    #[clap(short = 'P', long = "private-key")]
+    pub private_key: String,
+    /// Config file path
+    #[clap(short = 'c', long = "config-dir", default_value = "/etc/wireguard")]
+    pub config_dir: String,
+}
+
+impl Command for Up {}
+impl Up {
+    pub async fn exec(&self, fg: &Fireguard, repository: &str) -> Result<()> {
+        let render = Render {
+            username: self.username.clone(),
+            peername: self.peername.clone(),
+            private_key: self.private_key.clone(),
+            config_dir: self.config_dir.clone(),
+        };
+        render.exec(fg, repository).await?;
+        let bt = BoringTun::new(repository)?;
+        Ok(bt.up().await?)
+    }
+}
+
+/// Stop the Wireguard tunnel for the current host
+#[derive(Clap, Debug)]
+pub struct Down {
+    /// User name
+    #[clap(short = 'u', long = "username")]
+    pub username: String,
+    /// Peer name
+    #[clap(short = 'p', long = "peername")]
+    pub peername: String,
+    /// Private key
+    #[clap(short = 'P', long = "private-key")]
+    pub private_key: String,
+    /// Config file path
+    #[clap(short = 'c', long = "config-dir", default_value = "/etc/wireguard")]
+    pub config_dir: String,
+}
+
+impl Command for Down {}
+impl Down {
+    pub async fn exec(&self, _fg: &Fireguard, repository: &str) -> Result<()> {
+        let bt = BoringTun::new(repository)?;
+        Ok(bt.down().await?)
     }
 }

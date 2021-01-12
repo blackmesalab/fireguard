@@ -130,7 +130,21 @@ impl Host {
         fwmark: u32,
         peers: Vec<Peer>,
     ) -> Self {
-        Host { repository, name, address, private_key, listen_port, pre_up, pre_down, post_up, post_down, dns, table, fwmark, peers }
+        Host {
+            repository,
+            name,
+            address,
+            private_key,
+            listen_port,
+            pre_up,
+            pre_down,
+            post_up,
+            post_down,
+            dns,
+            table,
+            fwmark,
+            peers,
+        }
     }
 }
 
