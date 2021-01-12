@@ -14,6 +14,7 @@ extern crate pretty_env_logger;
 extern crate rand;
 extern crate read_input;
 extern crate serde;
+extern crate signal_hook;
 extern crate tera;
 extern crate toml;
 extern crate whoami;

@@ -1,8 +1,13 @@
 use std::path::Path;
+use std::thread;
+use std::process;
 
 use clap::Clap;
 use color_eyre::eyre::{bail, Result};
 use tokio::fs::read_to_string;
+use tokio::task;
+use signal_hook::consts::signal::*;
+use signal_hook::iterator::Signals;
 
 use crate::cmd::{Command, Fireguard};
 use crate::wg::{BoringTun, WgConfig};
@@ -111,7 +116,17 @@ impl Command for Up {}
 impl Up {
     pub async fn exec(&self, _fg: &Fireguard, repository: &str) -> Result<()> {
         let bt = BoringTun::new(repository)?;
-        Ok(bt.up().await?)
+        let mut signals = Signals::new(&[SIGTERM, SIGINT]).unwrap(); 
+        bt.up().await?;
+        let t = task::spawn(async move {
+            for sig in signals.forever() {
+                warn!("Received signal {:#?}, shutting down Boringtun", sig);
+                bt.down().await.unwrap_or(());
+                process::exit(0);
+            }
+        });
+        t.await?;
+        Ok(())
     }
 }
 

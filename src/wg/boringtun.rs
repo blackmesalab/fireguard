@@ -5,7 +5,7 @@ use color_eyre::eyre::{bail, Result};
 
 use crate::shell::Shell;
 
-const WG_QUICK_USERSPACE_IMPLEMENTATION: &str = "borintun";
+const WG_QUICK_USERSPACE_IMPLEMENTATION: &str = "boringtun";
 const WG_QUICK_SUDO: &str = "1";
 
 #[derive(Default, Debug, Clone)]
@@ -51,6 +51,7 @@ pub struct BoringPeer {
 
 impl BoringPeer {}
 
+#[derive(Default, Debug, Clone)]
 pub struct BoringTun {
     repository: String,
 }
@@ -77,10 +78,10 @@ impl BoringTun {
             Shell::exec_with_env("wg-quick", &format!("up {}", self.repository), None, self.build_wg_quick_env(), true)
                 .await;
         if result.success() {
-            info!("Boringtun instance started successfully:\n{}", result.stdout());
+            info!("Boringtun instance started successfully:\n{}", result.stderr().trim());
             Ok(())
         } else {
-            bail!("Error running Boringtun instance: {}", result.stderr());
+            bail!("Error running Boringtun instance: {}", result.stderr().trim());
         }
     }
 
@@ -95,10 +96,10 @@ impl BoringTun {
         )
         .await;
         if result.success() {
-            info!("Boringtun instance stopped successfully:\n{}", result.stdout());
+            info!("Boringtun instance stopped successfully");
             Ok(())
         } else {
-            bail!("Error stopping Boringtun instance: {}", result.stderr());
+            bail!("Error stopping Boringtun instance: {}", result.stderr().trim());
         }
     }
 
