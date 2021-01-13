@@ -1,11 +1,12 @@
-# Crosscompilation for ARMHF
+# Crosscompilation for ARMHF/ARM64
 
 As armhf boards (like the raspberry pi) are becoming more and more common, 
-cheaper and more powerful, using `fireguard` on an armhf board is becoming
-more conveniente. This document explains briefly the changes necessary
+cheaper and more powerful, using `fireguard` on an armhf/arm64 board is becoming
+more convenient. This document explains briefly the changes necessary
 for crosscompiling the project on Debian/Ubuntu (the developer's platform
 of choice) for the armhf architecture (that supports RaspberryPi versions 2
-to 4 inclusive and many other boards (like the ones from hardkernel)).
+to 3 inclusive and many other boards (like the ones from hardkernel)) and the
+arm64 architecture like the Raspberry Pi 4 models.
 
 # Local configuration
 
@@ -20,7 +21,8 @@ user.
 Run the command
 
 ```
-rustup target add armv7-unknown-linux-gnueabihf
+rustup target add armv7-unknown-linux-gnueabihf # raspberry < 4
+rustup target add aarch64-unknown-linux-gnu # raspberry >= 4
 ```
 
 to download the required Rust components for the target architecture
@@ -33,6 +35,9 @@ there) and add
 ```
 [target.armv7-unknown-linux-gnueabihf]
 linker = "arm-linux-gnueabihf-gcc"
+
+[target.aarch64-unknown-linux-gnu]
+linker = "aarch64-linux-gnu-gcc"
 ```
 
 so that the `cargo` command knows what linker to call
@@ -43,6 +48,7 @@ Run the command
 
 ```
 dpkg --add-architecture armhf
+dpkg --add-architecture arm64
 ```
 
 and update the list of packages with
@@ -60,6 +66,7 @@ Run the command
 
 ```
 apt install crossbuild-essential-armhf
+apt install crossbuild-essential-arm64
 ```
 
 this metapackage will _not_ be available unless you add the architecture
@@ -71,11 +78,13 @@ To test the crosscompilation setup you should be able to use the provided
 `Makefile` and invoke
 
 ```
-make raspberry
+make raspberry_<arch>
 ```
 
-to build the binaries in `release` mode. The `raspberry_debug` make target is
+to build the binaries in `release` mode. The `raspberry_<arch>_debug` make target is
 also provided if you need debugging symbols in your binaries.
+
+`<arch>` is the name of the architecture you are targeting.
 
 
 # Binaries
@@ -86,6 +95,7 @@ architecture, in this case:
 
 ```
 target/armv7-unknown-linux-gnueabihf/release/fireguard
+target/aarch64-unknown-linux-gnu/release/fireguard
 ```
 
 or `debug` if you built with the debug symbols enabled.
