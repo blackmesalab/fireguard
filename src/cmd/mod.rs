@@ -29,6 +29,9 @@ pub struct Fireguard {
     /// Config file
     #[clap(short = 'C', long = "config-file", default_value = "nodes.toml")]
     pub config_file: String,
+    /// Config file
+    #[clap(short = 'D', long = "debug")]
+    pub debug: bool,
 }
 
 impl Fireguard {
