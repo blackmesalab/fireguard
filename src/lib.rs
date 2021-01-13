@@ -24,6 +24,7 @@ mod config;
 mod docker;
 mod ip;
 mod shell;
+mod utils;
 mod wg;
 
 use std::env;
@@ -32,13 +33,13 @@ use clap::Clap;
 use color_eyre::eyre::Result;
 
 use cmd::Fireguard;
-use docker::Docker;
+use utils::setup_logging;
 
 pub async fn run() -> Result<()> {
-    pretty_env_logger::init();
     let version = env!("CARGO_PKG_VERSION");
-    info!("Running Fireguard {}", version);
     let cmd = Fireguard::parse();
+    setup_logging(cmd.debug);
+    info!("Running Fireguard {}", version);
     debug!("{:#?}", cmd);
     Ok(cmd.exec().await?)
 }
