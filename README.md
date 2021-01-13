@@ -6,6 +6,8 @@
 - [Install](#install)
   - [Rust version](#rust-version)
 - [Docker](#docker)
+- [Changelog](#changelog)
+- [Contributing](#contributing)
 - [Software](#software)
 - [License](#license)
 
@@ -44,6 +46,12 @@ To run it:
 ```
 
 Where the arguments are the trust repository, its name on disk, the user, the name of the new node / peer and finally the Wireguard private key.
+
+### Changelog
+See [CHANGELOG.md](https://github.com/blackmesalab/fireguard/blob/master/CHANGELOG.md).
+
+### Contributing
+Contributions are warmly welcomed, see [CONTRIBUTING.md](https://github.com/blackmesalab/fireguard/blob/master/CONTRIBUTING.md) for more info.
 
 ### Software
 All this awesomness is possible thanks to:
