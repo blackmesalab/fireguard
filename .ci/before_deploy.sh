@@ -22,7 +22,7 @@ main() {
     test -f Cargo.lock || cargo generate-lockfile
 
     # build the executables we want to release
-    cross rustc --bin "${fireguard}" --target "${TARGET}" --release
+    cross rustc --bin "${binary}" --target "${TARGET}" --release
 
     # change binary name in case we are on windows
     if [ "${TARGET}" = "x86_64-pc-windows-gnu" ]; then
