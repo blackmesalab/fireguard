@@ -1,26 +1,22 @@
 use std::collections::HashMap;
 
-use chrono::DateTime;
 use color_eyre::eyre::{bail, Result};
 
 use crate::shell::Shell;
 
-const WG_QUICK_USERSPACE_IMPLEMENTATION: &str = "boringtun";
-const WG_QUICK_SUDO: &str = "1";
-
 #[derive(Default, Debug, Clone)]
-pub struct BoringStatus {
+pub struct WgStatus {
     pub repository: String,
     pub public_key: String,
     pub private_key: String,
     pub listen_port: u32,
     pub fwmark: u32,
     pub table: Option<u32>,
-    pub peers: Vec<BoringPeer>,
+    pub peers: Vec<WgPeer>,
 }
 
-impl BoringStatus {
-    pub fn new(status: &str, peers: Vec<BoringPeer>) -> Result<Self> {
+impl WgStatus {
+    pub fn new(status: &str, peers: Vec<WgPeer>) -> Result<Self> {
         let status = status.split(" ").collect::<Vec<&str>>();
         if ! status.is_empty() {
             Ok(Self { 
@@ -33,13 +29,13 @@ impl BoringStatus {
                 peers
             })
         } else {
-            Ok(BoringStatus::default())
+            Ok(WgStatus::default())
         }
     }
 }
 
 #[derive(Default, Debug, Clone)]
-pub struct BoringPeer {
+pub struct WgPeer {
     endpoint: Option<String>,
     public_key: String,
     latest_handshake: Option<u64>,
@@ -49,67 +45,57 @@ pub struct BoringPeer {
     allowed_ips: Vec<String>,
 }
 
-impl BoringPeer {}
+impl WgPeer {}
 
-#[derive(Default, Debug, Clone)]
-pub struct BoringTun {
+pub struct WgQuick {
     repository: String,
 }
 
-impl BoringTun {
+impl WgQuick {
     pub fn new(repository: &str) -> Result<Self> {
-        if !Shell::runnable("boringtun") || !Shell::runnable("wg-quick") {
+        if !Shell::runnable("wg-quick") {
             bail!("Missing command dependency")
         }
-        Ok(BoringTun { repository: repository.to_string() })
-    }
-
-    fn build_wg_quick_env(&self) -> HashMap<&str, &str> {
-        let mut env = HashMap::new();
-        env.insert("WG_QUICK_USERSPACE_IMPLEMENTATION", WG_QUICK_USERSPACE_IMPLEMENTATION);
-        env.insert("WG_SUDO", WG_QUICK_SUDO);
-        debug!("Injected WG_QUICK_USERSPACE_IMPLEMENTATION and WG_SUDO variables into command environment");
-        env
+        Ok(WgQuick { repository: repository.to_string() })
     }
 
     pub async fn up(&self) -> Result<()> {
-        info!("Starting new Boringtun instance for repository {}", self.repository);
+        info!("Starting new Wireguard instance for repository {}", self.repository);
         let result =
-            Shell::exec_with_env("wg-quick", &format!("up {}", self.repository), None, self.build_wg_quick_env(), true)
+            Shell::exec("wg-quick", &format!("up {}", self.repository), None, true)
                 .await;
         if result.success() {
-            info!("Boringtun instance started successfully:\n{}", result.stderr().trim());
+            info!("Wireguard instance started successfully:\n{}", result.stderr());
             Ok(())
         } else {
-            bail!("Error running Boringtun instance: {}", result.stderr().trim());
+            bail!("Error running Wireguard instance: {}", result.stderr());
         }
     }
 
     pub async fn down(&self) -> Result<()> {
-        info!("Stopping Boringtun instance for repository {}", self.repository);
-        let result = Shell::exec_with_env(
+        info!("Stopping Wireguard instance for repository {}", self.repository);
+        let result = Shell::exec(
             "wg-quick",
             &format!("down {}", self.repository),
             None,
-            self.build_wg_quick_env(),
             true,
         )
         .await;
         if result.success() {
-            info!("Boringtun instance stopped successfully");
+            info!("Wireguard instance stopped successfully:\n{}", result.stderr());
             Ok(())
         } else {
-            bail!("Error stopping Boringtun instance: {}", result.stderr().trim());
+            bail!("Error stopping Wireguard instance: {}", result.stderr());
         }
     }
 
     pub async fn status(&self) -> Result<()> {
         let result = Shell::exec("wg", &format!("show {}", self.repository), None, true).await;
         if result.success() {
-            info!("Boringtun statistics for repository {}:\n{}", self.repository, result.stdout().trim());
+            info!("Wireguard statistics for repository {}:\n{}", self.repository, result.stdout().trim());
             Ok(())
         } else {
-            bail!("Error checking Boringtun instance status: {}", result.stderr());
+            bail!("Error checking Wireguard instance status: {}", result.stderr());
         }
     }
 }

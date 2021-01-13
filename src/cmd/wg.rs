@@ -10,7 +10,7 @@ use signal_hook::consts::signal::*;
 use signal_hook::iterator::Signals;
 
 use crate::cmd::{Command, Fireguard};
-use crate::wg::{BoringTun, WgConfig};
+use crate::wg::{WgQuick, WgConfig};
 
 /// Wg - Wireguard management
 #[derive(Clap, Debug)]
@@ -115,12 +115,12 @@ pub struct Up {}
 impl Command for Up {}
 impl Up {
     pub async fn exec(&self, _fg: &Fireguard, repository: &str) -> Result<()> {
-        let bt = BoringTun::new(repository)?;
+        let bt = WgQuick::new(repository)?;
         let mut signals = Signals::new(&[SIGTERM, SIGINT]).unwrap(); 
         bt.up().await?;
         let t = task::spawn(async move {
             for sig in signals.forever() {
-                warn!("Received signal {:#?}, shutting down Boringtun", sig);
+                warn!("Received signal {:#?}, shutting down Wireguard", sig);
                 bt.down().await.unwrap_or(());
                 process::exit(0);
             }
@@ -137,7 +137,7 @@ pub struct Down {}
 impl Command for Down {}
 impl Down {
     pub async fn exec(&self, _fg: &Fireguard, repository: &str) -> Result<()> {
-        let bt = BoringTun::new(repository)?;
+        let bt = WgQuick::new(repository)?;
         Ok(bt.down().await?)
     }
 }
@@ -149,7 +149,7 @@ pub struct Status {}
 impl Command for Status {}
 impl Status {
     pub async fn exec(&self, _fg: &Fireguard, repository: &str) -> Result<()> {
-        let bt = BoringTun::new(repository)?;
+        let bt = WgQuick::new(repository)?;
         bt.status().await?;
         Ok(())
     }

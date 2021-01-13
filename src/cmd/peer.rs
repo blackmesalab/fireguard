@@ -75,7 +75,7 @@ pub struct Add {
     pub keep_alive: u32,
     /// Allowed IPs
     #[clap(short = 'a', long = "allowed-ips")]
-    pub allowed_ips: Vec<String>,
+    pub allowed_ips: Option<Vec<String>>,
     /// Peer public endpoint if there is public connectivity
     #[clap(short = 'e', long = "endpoint")]
     pub endpoint: String,
@@ -130,13 +130,16 @@ impl Add {
         let fwmark = if self.fwmark > 0 { Some(self.fwmark) } else { None };
         let table = if self.table > 0 { Some(self.table) } else { None };
         let mut pool = IpPool::new(&config.network, config.get_peers_ips())?;
+        let pool_ip = pool.ip()?;
+        let pool_ips = vec![format!("{}/32", pool_ip)];
+        let allowed_ips = self.allowed_ips.as_ref().unwrap_or(&pool_ips);
         let peer = ConfigPeer::new(
             &self.username,
             &self.peername,
-            &format!("{}/{}", pool.ip()?, config.network_addr.prefix_len()),
+            &format!("{}/{}", pool_ip, config.network_addr.prefix_len()),
             self.port,
             &keys.public,
-            &self.allowed_ips,
+            &allowed_ips,
             self.keep_alive,
             &self.endpoint,
             table,

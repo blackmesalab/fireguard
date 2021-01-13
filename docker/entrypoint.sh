@@ -15,3 +15,6 @@ PRIVKEY=$5
 fireguard repo clone -r "${REPOSITORY}"
 fireguard wg -r "${REPONAME}" render -u "${USERNAME}" -p "${PEERNAME}" -P "${PRIVKEY}"
 fireguard wg -r "${REPONAME}" up
+fireguard proxy -r "${REPONAME}" up
+# fireguard dns -r ${REPONAME} up
+# fireguard quagga -r "${REPONAME}" up
