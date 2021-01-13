@@ -1,6 +1,13 @@
 # 📰 Changelog 📰
 
 - [Version 0.0.1](#version-0.0.1)
+- [Version 0.0.2](#version-0.0.2)
+
+## Version 0.0.2
+* Release v0.0.2. Fix CI
+* Add initial CONTRIBUTING guide
+* Add CHANGELOG
+* Fix #10: allow logging to be controlled via command line
 
 ## Version 0.0.1
 * Release version 0.0.1
