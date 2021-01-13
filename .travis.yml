@@ -51,7 +51,7 @@ deploy:
   on:
     repo: blackmesalab/fireguard
     tags: true
-  cleanup: false
+  skip_cleanup: true
 
 cache: cargo
 before_cache:
