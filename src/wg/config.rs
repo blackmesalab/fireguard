@@ -26,7 +26,7 @@ PrivateKey = {{ host.private_key }}
 
 {% for peer in host.peers %}# Peer {{ peer.name }}
 [Peer]
-Endpoint = {{ peer.endpoint }}:{{ peer.listen_port }}
+{% if peer.endpoint %}Endpoint = {{ peer.endpoint }}:{{ peer.listen_port }}{% endif %}
 PublicKey = {{ peer.public_key }}
 AllowedIps = {{ peer.allowed_ips | join(sep=",") }}
 {% if peer.persistent_keepalive > 0 %}PersistentKeepalive = {{ peer.persistent_keepalive}}{% endif %}
@@ -155,7 +155,7 @@ pub struct Peer {
     pub listen_port: u32,
     pub allowed_ips: Vec<String>,
     pub persistent_keepalive: u32,
-    pub endpoint: String,
+    pub endpoint: Option<String>,
 }
 
 impl Peer {
@@ -165,7 +165,7 @@ impl Peer {
         listen_port: u32,
         allowed_ips: Vec<String>,
         persistent_keepalive: u32,
-        endpoint: String,
+        endpoint: Option<String>,
     ) -> Self {
         Self { name, public_key, listen_port, allowed_ips, persistent_keepalive, endpoint }
     }
