@@ -25,7 +25,7 @@ jobs:
       os: osx
 
     # Windows
-    - env: TARGET=x86_64-pc-windows-gnu DISABLE_TESTS=1
+    # - env: TARGET=x86_64-pc-windows-gnu DISABLE_TESTS=1
 
 before_install:
   - set -e
