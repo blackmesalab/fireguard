@@ -6,6 +6,7 @@ extern crate futures_util;
 extern crate ipnet;
 #[macro_use]
 extern crate log;
+extern crate nix;
 extern crate parking_lot;
 extern crate pretty_env_logger;
 extern crate rand;
