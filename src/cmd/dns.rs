@@ -9,7 +9,7 @@ use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
 use crate::cmd::{Command, Fireguard};
-use crate::config::{Config, Peer as ConfigPeer};
+use crate::config::Config;
 use crate::shell::Shell;
 
 const DNSMASQ_LIST_TMPL: &str = r#"# {{ host.repository }} - {{ host.name }} dnsmasq dynamic list
@@ -69,8 +69,7 @@ pub struct List {}
 
 impl Command for List {}
 impl List {
-    pub async fn exec(&self, fg: &Fireguard, config: Config, repository: &str) -> Result<()> {
-        let config = self.load_config(repository, &fg.config_dir, &fg.config_file).await?;
+    pub async fn exec(&self, _fg: &Fireguard, config: Config, repository: &str) -> Result<()> {
         info!("Available DNS entries for repository {}: {}", repository, config.peers.len());
         for peer in config.peers.values() {
             let address = peer.address.parse::<Ipv4Net>()?;
@@ -110,7 +109,6 @@ impl Render {
 
     pub async fn exec(&self, fg: &Fireguard, config: Config, repository: &str) -> Result<()> {
         self.pre_checks(fg).await?;
-        let config = self.load_config(repository, &fg.config_dir, &fg.config_file).await?;
         info!("Rendering {} DNS entries for repository {}", config.peers.len(), repository);
         let dns_config_path = Path::new(&self.config_dir).join("99-ddns.conf");
         let mut dns_tera = Tera::default();
