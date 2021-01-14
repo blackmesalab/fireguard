@@ -16,8 +16,8 @@ pub struct Repo {
     #[clap(subcommand)]
     pub action: Action,
     /// Repository name
-    #[clap(short = 'r', long = "repository", default_value = "")]
-    pub repository: String,
+    #[clap(short = 'r', long = "repository")]
+    pub repository: Option<String>,
 }
 
 #[derive(Clap, Debug)]
@@ -30,7 +30,7 @@ pub enum Action {
     Remove(Remove),
     /// Update a Fireguard trust repository
     Pull(Pull),
-    /// Update a Fireguard trust repository
+    /// Commit a Fireguard trust repository
     Commit(Commit),
 }
 
@@ -54,11 +54,19 @@ impl Repo {
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
         self.pre_checks(fg).await?;
         match self.action {
-            Action::Clone(ref action) => action.exec(fg, &self.repository).await?,
+            Action::List(_) => {}
+            _ => {
+                if self.repository.is_none() {
+                    bail!("--repository / -r argument is mandatory");
+                }
+            }
+        }
+        match self.action {
+            Action::Clone(ref action) => action.exec(fg, &self.repository.as_ref().unwrap()).await?,
             Action::List(ref action) => action.exec(fg).await?,
-            Action::Remove(ref action) => action.exec(fg, &self.repository).await?,
-            Action::Pull(ref action) => action.exec(fg, &self.repository).await?,
-            Action::Commit(ref action) => action.exec(fg, &self.repository).await?,
+            Action::Remove(ref action) => action.exec(fg, &self.repository.as_ref().unwrap()).await?,
+            Action::Pull(ref action) => action.exec(fg, &self.repository.as_ref().unwrap()).await?,
+            Action::Commit(ref action) => action.exec(fg, &self.repository.as_ref().unwrap()).await?,
         }
         Ok(())
     }
