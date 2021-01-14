@@ -70,6 +70,6 @@ notifications:
   irc:
     channels:
       - "chat.freenode.net##blackmesa"
-    on_success: always
+    on_success: never
     on_failure: always
     use_notice: true
