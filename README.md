@@ -5,7 +5,8 @@
 
 - [Install](#install)
   - [Rust version](#rust-version)
-- [Docker](#docker)
+- [Docker inception](#docker-inception)
+  - [Run the daemon](#run-the-daemon)
 - [Changelog](#changelog)
 - [Contributing](#contributing)
 - [Software](#software)
@@ -32,20 +33,24 @@ Sooner or later is will be on [Crates.io](https://crates.io).
 #### Rust version
 Fireguard has been tested with Rustc >= 1.42, both stable and nightly.
 
-### Docker
-Fireguard is meant to run inside a privileged container with network=host. 
+### Docker inception
+Fireguard can run any of its subcommand directly inside a Docker container by using the `docker` subcommand.
 
-Currently we are building and x86-64 image on [Docker Hub](https://hub.docker.com/r/blackmesalab/fireguard/).
+It relies on the image [blackmesalab/fireguard](https://hub.docker.com/r/blackmesalabs/fireguardd) that can be build using `make docker_build`.
 
-To run it:
+**NOTE: the container will run as privileged and with network host for now**
 
 ```sh
-❯❯❯ docker run --privileged --net=host --rm -ti blackmesalab/fireguard \
-        https://github.com/blackmesalb/novanet \
-        novanet bigo 8FLd3fxj2MqJEoxRy5Y0FA5Bu81bp20rG7kuojcAYmA= 
+❯❯❯ fireguard docker repo list 
+...
+❯❯❯ fireguard docker peer -r novanet list
+...
 ```
 
-Where the arguments are the trust repository, its name on disk, the user, the name of the new node / peer and finally the Wireguard private key.
+#### Run the daemon
+```sh
+❯❯❯ fireguard docker serve 
+```
 
 ### Changelog
 See [CHANGELOG.md](https://github.com/blackmesalab/fireguard/blob/master/CHANGELOG.md).

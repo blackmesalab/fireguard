@@ -1,11 +1,12 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use color_eyre::eyre::Result;
 use ipnet::Ipv4Net;
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
-use tokio::fs::{self, read_to_string};
+use tokio::fs;
+use tokio::io::AsyncWriteExt;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
@@ -16,14 +17,17 @@ pub struct Config {
     #[serde(skip_deserializing, skip_serializing)]
     pub network_addr: Ipv4Net,
     #[serde(skip_deserializing, skip_serializing)]
+    pub config_dir: PathBuf,
+    #[serde(skip_deserializing, skip_serializing)]
     mutex: Mutex<u32>,
 }
 
 impl Config {
     pub async fn load(path: &PathBuf) -> Result<Self> {
-        let data = read_to_string(path).await?;
+        let data = fs::read_to_string(path).await?;
         let mut config: Config = toml::from_str(&data)?;
         config.network_addr = config.network.parse::<Ipv4Net>()?;
+        config.config_dir = fs::canonicalize(path.parent().unwrap_or(&Path::new("."))).await?;
         Ok(config)
     }
 
@@ -51,6 +55,14 @@ impl Config {
     pub fn get_peers_ips(&self) -> Vec<String> {
         self.peers.values().into_iter().map(|v| v.address.clone()).collect::<Vec<String>>()
     }
+
+    pub async fn write_pid_file(&self, daemon: &str, pid: u32) -> Result<()> {
+        let path = Path::new(&self.config_dir).join(&format!("{}.pid", daemon));
+        let mut file = fs::File::create(&path).await?;
+        file.write(&format!("{}", pid).as_bytes()).await?;
+        info!("Written PID {} for {} on file for {}", pid, daemon, path.display());
+        Ok(())
+    }
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
@@ -66,10 +78,10 @@ pub struct Peer {
     pub table: Option<u32>,
     pub fwmark: Option<u32>,
     pub mtu: u32,
-    pub pre_up: Option<String>,
-    pub post_up: Option<String>,
-    pub pre_down: Option<String>,
-    pub post_down: Option<String>,
+    pub pre_up: Option<Vec<String>>,
+    pub post_up: Option<Vec<String>>,
+    pub pre_down: Option<Vec<String>>,
+    pub post_down: Option<Vec<String>>,
     pub dns: Option<Vec<String>>,
 }
 
@@ -86,10 +98,10 @@ impl Peer {
         table: Option<u32>,
         fwmark: Option<u32>,
         mtu: u32,
-        pre_up: Option<String>,
-        post_up: Option<String>,
-        pre_down: Option<String>,
-        post_down: Option<String>,
+        pre_up: Option<Vec<String>>,
+        post_up: Option<Vec<String>>,
+        pre_down: Option<Vec<String>>,
+        post_down: Option<Vec<String>>,
         dns: Option<Vec<String>>,
     ) -> Self {
         Peer {

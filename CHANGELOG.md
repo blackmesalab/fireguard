@@ -1,7 +1,20 @@
 # 📰 Changelog 📰
 
+- [Version 0.0.4](#version-0.0.4)
+- [Version 0.0.3](#version-0.0.3)
 - [Version 0.0.2](#version-0.0.2)
 - [Version 0.0.1](#version-0.0.1)
+
+## Version 0.0.4
+* 2c55318 Release version 0.0.4
+* 4da6bb6 Fix #11: implement a single command to replace entrypoint.sh
+* e683f0a Add docker inception command
+* fcbcdc9 Add PID store functionalities
+* c39f12e Still not working but better implemented DNS service discovery management
+* 3cd4294 Add Makefile target to build Fireguard Docker image
+
+## Version 0.0.3
+* Release v0.0.3. Fix CI and allow travis to push on github releases.     
 
 ## Version 0.0.2
 * Release v0.0.2. Fix CI

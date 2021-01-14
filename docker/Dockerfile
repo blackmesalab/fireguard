@@ -6,7 +6,5 @@ RUN mkdir -p /etc/fireguard /etc/wireguard && \
         wireguard-tools dnsmasq 
 
 COPY fireguard /usr/bin/fireguard
-COPY boringtun /usr/bin/boringtun
-COPY entrypoint.sh /entrypoint.sh
 
-CMD ["/entrypoint.sh"]
+CMD ["/usr/bin/fireguard"]
