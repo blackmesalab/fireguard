@@ -1,10 +1,11 @@
 # User container image
-FROM alpine:latest
-RUN mkdir -p /etc/fireguard /etc/wireguard && \
-        apk update && \
-        apk add bash iptables ca-certificates \
-        wireguard-tools dnsmasq 
+FROM debian:testing-slim
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
 
-COPY fireguard /usr/bin/fireguard
+RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM"
+RUN mkdir -p /etc/fireguard /etc/wireguard
+
+COPY ./$TARGETPLATFORM/fireguard /usr/bin/fireguard
 
 CMD ["/usr/bin/fireguard"]
