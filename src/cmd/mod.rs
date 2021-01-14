@@ -1,8 +1,11 @@
 mod dns;
+mod docker;
 mod peer;
 mod repo;
+mod daemon;
 mod wg;
 
+use std::env;
 use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
@@ -12,9 +15,11 @@ use color_eyre::eyre::{bail, Result};
 use crate::config::Config;
 
 use dns::Dns;
+use docker::Docker;
 use peer::Peer;
 use repo::Repo;
 use wg::Wg;
+use daemon::Daemon;
 
 /// Fireguard - wireguard autoconfiguration application
 #[derive(Clap, Debug)]
@@ -32,12 +37,30 @@ pub struct Fireguard {
     /// Config file
     #[clap(short = 'D', long = "debug")]
     pub debug: bool,
+    /// Cmdline args vec, do not use, it is autofilled
+    #[clap(long = "args", default_values = &[])]
+    pub args: Vec<String>,
 }
 
 impl Fireguard {
-    pub async fn exec(&self) -> Result<()> {
+    async fn pre_checks(&mut self) -> Result<()> {
         let config = Path::new(&self.config_dir);
-        if !config.is_dir() {
+        if config.is_dir() {
+            let mut args = env::args().collect::<Vec<String>>();
+            debug!("Command line args: [{}]", args.join(", "));
+            if args[0].starts_with("target/") {
+                args.remove(0);
+            }
+            for (idx, arg) in args.iter().enumerate() {
+                if arg == "docker" {
+                    args.remove(idx);
+                    break;
+                }
+            }
+            debug!("Command line args after sanification: [{}]", args.join(", "));
+            self.args = args;
+            Ok(())
+        } else {
             bail!(
                 "Please create directory {} as root: mkdir -p {} && chown {} {}",
                 self.config_dir,
@@ -46,11 +69,17 @@ impl Fireguard {
                 self.config_dir
             );
         }
+    }
+
+    pub async fn exec(&mut self) -> Result<()> {
+        self.pre_checks().await?;
         match self.action {
             Action::Repo(ref action) => action.exec(self).await?,
             Action::Peer(ref action) => action.exec(self).await?,
             Action::Wg(ref action) => action.exec(self).await?,
             Action::Dns(ref action) => action.exec(self).await?,
+            Action::Docker(ref action) => action.exec(self).await?,
+            Action::Daemon(ref action) => action.exec(self).await?,
         }
         Ok(())
     }
@@ -66,6 +95,10 @@ pub enum Action {
     Wg(Wg),
     /// DNS management
     Dns(Dns),
+    /// Docker management
+    Docker(Docker),
+    /// Daemon management
+    Daemon(Daemon)
 }
 
 #[async_trait]
