@@ -71,10 +71,10 @@ impl WgConfig {
                 my_peer.address.clone(),
                 private_key.to_string(),
                 my_peer.listen_port,
-                my_peer.pre_up.clone().unwrap_or(String::new()),
-                my_peer.post_up.clone().unwrap_or(String::new()),
-                my_peer.pre_down.clone().unwrap_or(String::new()),
-                my_peer.post_down.clone().unwrap_or(String::new()),
+                my_peer.pre_up.clone().unwrap_or(Vec::new()),
+                my_peer.post_up.clone().unwrap_or(Vec::new()),
+                my_peer.pre_down.clone().unwrap_or(Vec::new()),
+                my_peer.post_down.clone().unwrap_or(Vec::new()),
                 my_peer.dns.clone().unwrap_or(Vec::new()),
                 my_peer.table.unwrap_or(0),
                 my_peer.fwmark.unwrap_or(0),
@@ -121,29 +121,37 @@ impl Host {
         address: String,
         private_key: String,
         listen_port: u32,
-        pre_up: String,
-        post_up: String,
-        pre_down: String,
-        post_down: String,
+        pre_up: Vec<String>,
+        post_up: Vec<String>,
+        pre_down: Vec<String>,
+        post_down: Vec<String>,
         dns: Vec<String>,
         table: u32,
         fwmark: u32,
         peers: Vec<Peer>,
     ) -> Self {
-        Host {
+        Self {
             repository,
             name,
             address,
             private_key,
             listen_port,
-            pre_up,
-            pre_down,
-            post_up,
-            post_down,
+            pre_up: Self::build_hook_cmd(pre_up),
+            pre_down: Self::build_hook_cmd(pre_down),
+            post_up: Self::build_hook_cmd(post_up),
+            post_down: Self::build_hook_cmd(post_down),
             dns,
             table,
             fwmark,
             peers,
+        }
+    }
+
+    fn build_hook_cmd(hooks: Vec<String>) -> String {
+        if hooks.is_empty() {
+            String::new()
+        } else {
+            format!(r#"bash -c "{}""#, hooks.join("; "))
         }
     }
 }

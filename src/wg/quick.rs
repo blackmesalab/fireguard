@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use color_eyre::eyre::{bail, Result};
 
 use crate::shell::Shell;
