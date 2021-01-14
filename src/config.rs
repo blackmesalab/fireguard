@@ -56,11 +56,22 @@ impl Config {
         self.peers.values().into_iter().map(|v| v.address.clone()).collect::<Vec<String>>()
     }
 
+    pub fn pid_file(&self, daemon: &str) -> PathBuf {
+        Path::new(&self.config_dir).join(&format!("{}.pid", daemon))
+    }
+
     pub async fn write_pid_file(&self, daemon: &str, pid: u32) -> Result<()> {
-        let path = Path::new(&self.config_dir).join(&format!("{}.pid", daemon));
+        let path = self.pid_file(daemon);
         let mut file = fs::File::create(&path).await?;
         file.write(&format!("{}", pid).as_bytes()).await?;
         info!("Written PID {} for {} on file for {}", pid, daemon, path.display());
+        Ok(())
+    }
+
+    pub async fn remove_pid_file(&self, daemon: &str) -> Result<()> {
+        let path = self.pid_file(daemon);
+        fs::remove_file(&path).await?;
+        info!("PID file {} removed from disk", path.display());
         Ok(())
     }
 }
