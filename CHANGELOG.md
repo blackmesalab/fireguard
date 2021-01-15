@@ -1,10 +1,19 @@
 # 📰 Changelog 📰
 
+- [Version 0.0.6](#version-0.0.6)
 - [Version 0.0.5](#version-0.0.5)
 - [Version 0.0.4](#version-0.0.4)
 - [Version 0.0.3](#version-0.0.3)
 - [Version 0.0.2](#version-0.0.2)
 - [Version 0.0.1](#version-0.0.1)
+
+## Version 0.0.6
+* 9c705fb Release version 0.0.6
+* f4caa35 Docker should run the same version as the bare-metal app
+* 1d71750 Add env_logger 0.8 as dependency
+* bebc5d9 Fix #22. Stream stdout and stderr instead of waiting for command completione8ba31e Use a less fancy logger when in docker
+* 0f5554b Fix in-docker command line build
+* eeb49dd Make username and peername optional in serve command. They are needed only if the privatekey is there to allow a new render of the Wg config
 
 ## Version 0.0.5
 * 161eb90 Update changelog for v0.0.5
