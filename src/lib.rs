@@ -2,6 +2,7 @@ extern crate async_trait;
 extern crate chrono;
 extern crate clap;
 extern crate color_eyre;
+extern crate env_logger;
 extern crate futures_util;
 extern crate ipnet;
 #[macro_use]
