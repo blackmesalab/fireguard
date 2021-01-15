@@ -13,7 +13,7 @@ use crate::cmd::repo::Clone;
 use crate::cmd::wg::{Down, Render, Status as WgStatus, Up};
 use crate::cmd::{Command, Fireguard};
 use crate::config::Config;
-use crate::utils::install_wireguard_kernel_module;
+use crate::utils::install_packages_in_docker;
 
 /// Daemon - Manage Fireguard daemon
 #[derive(Clap, Debug)]
@@ -61,14 +61,14 @@ pub struct Serve {
     #[clap(short = 'U', long = "repository-url")]
     pub repository_url: Option<String>,
     /// Private key
-    #[clap(short = 'P', long = "private-key")]
+    #[clap(short = 'P', long = "private-key", requires_all = &["username", "peername"])]
     pub private_key: Option<String>,
     /// User name
     #[clap(short = 'u', long = "username")]
-    pub username: String,
+    pub username: Option<String>,
     /// Peer name
     #[clap(short = 'p', long = "peername")]
-    pub peername: String,
+    pub peername: Option<String>,
     /// Wireguard config file path
     #[clap(short = 'c', long = "config-dir", default_value = "/etc/wireguard")]
     pub config_dir: String,
@@ -96,15 +96,15 @@ impl Serve {
 
     pub async fn exec(&self, fg: &Fireguard, repository: &str) -> Result<()> {
         info!("Starting Fireguard daemon in foreground");
-        install_wireguard_kernel_module().await?;
+        install_packages_in_docker().await?;
         if let Some(repo) = self.repository_url.as_ref() {
             let clone = Clone {};
             clone.exec(fg, repo).await?;
         }
         if let Some(pkey) = self.private_key.as_ref() {
             let render = Render {
-                username: self.username.clone(),
-                peername: self.peername.clone(),
+                username: self.username.clone().unwrap(),
+                peername: self.peername.clone().unwrap(),
                 private_key: pkey.clone(),
                 config_dir: self.config_dir.clone(),
             };
