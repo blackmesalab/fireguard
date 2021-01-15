@@ -1,17 +1,31 @@
-use log::LevelFilter;
+use std::process;
 
 use color_eyre::eyre::{bail, Result};
+use log::LevelFilter;
 
 use crate::shell::Shell;
 
-pub const APT_PACKAGES: &str = "bc ca-certificates dnsmasq iptables wireguard wireguard-dkms wireguard-tools";
+pub const APT_PACKAGES_HOST: &str = "bc wireguard wireguard-dkms wireguard-tools";
+pub const APT_PACKAGES_DOCKER: &str = "bc ca-certificates dnsmasq iptables wireguard-tools iproute2";
 
 pub fn setup_logging(debug: bool) {
-    let mut builder = pretty_env_logger::formatted_timed_builder();
-    builder.format_timestamp_secs();
     let level = if debug { LevelFilter::Debug } else { LevelFilter::Info };
-    builder.filter_level(level);
-    builder.init()
+
+    if process::id() != 1 {
+        // Not in docker
+        let mut builder = pretty_env_logger::formatted_timed_builder();
+        builder.format_timestamp_secs();
+        builder.filter_level(level);
+        builder.init()
+    } else {
+        // In docker
+        let mut builder = env_logger::builder();
+        builder.format_timestamp(None);
+        builder.filter_level(level);
+        builder.format_level(false);
+        builder.format_indent(None);
+        builder.init()
+    }
 }
 
 pub async fn install_wireguard_kernel_module() -> Result<()> {
@@ -38,12 +52,29 @@ pub async fn install_wireguard_kernel_module() -> Result<()> {
         }
         info!("Wireguard module not found, building it for kernel version {}", kver);
         Shell::exec("apt-get", "update", None, false).await;
-        let apt_cmd = Shell::exec("apt-get", &format!("-y install {} {}", package, APT_PACKAGES,), None, false).await;
+        let apt_cmd =
+            Shell::exec("apt-get", &format!("-y install {} {}", package, APT_PACKAGES_HOST), None, false).await;
         if apt_cmd.success() {
             warn!("Wireguard kernel module installed successfully for version {}", kver);
             Ok(())
         } else {
-            bail!("Unable to find kernel header for kernel version {}, Wireguard module not installed")
+            bail!("Unable to find kernel header for kernel version {}, Wireguard module not installed", kver);
         }
+    }
+}
+
+pub async fn install_packages_in_docker() -> Result<()> {
+    Shell::exec("apt-get", "update", None, false).await;
+    use crate::utils::install_packages_in_docker;
+    let apt_cmd = Shell::exec("apt-get", &format!("-y install {}", APT_PACKAGES_DOCKER), None, false).await;
+    if apt_cmd.success() {
+        info!("Packages {} installed inside Fireguard docker container:\n{}", APT_PACKAGES_DOCKER, apt_cmd.stdout());
+        Ok(())
+    } else {
+        bail!(
+            "Error installing packages {} inside Fireguard docker container:\n{}",
+            APT_PACKAGES_DOCKER,
+            apt_cmd.stderr()
+        );
     }
 }
