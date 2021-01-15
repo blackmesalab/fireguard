@@ -15,8 +15,8 @@ pub struct Docker {
     #[clap(short = 'd', long = "docker-image-name", default_value = "blackmesalab/fireguard")]
     pub docker_image_name: String,
     /// Docker image version
-    #[clap(short = 'v', long = "docker-image-version", default_value = "latest")]
-    pub docker_image_version: String,
+    #[clap(short = 'v', long = "docker-image-version")]
+    pub docker_image_version: Option<String>,
     /// Volumes to mount inside the container
     #[clap(short = 'V', long = "docker-volumes")]
     pub docker_volumes: Option<Vec<String>>,
@@ -38,7 +38,11 @@ pub enum Action {
 
 impl Docker {
     fn docker_image(&self) -> String {
-        format!("{}:{}", self.docker_image_name, self.docker_image_version)
+        if let Some(version) = self.docker_image_version.as_ref() {
+            format!("{}:{}", self.docker_image_name, version)
+        } else {
+            format!("{}:{}", self.docker_image_name, crate_version!())
+        }
     }
 
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {

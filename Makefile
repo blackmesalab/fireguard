@@ -38,7 +38,7 @@ docker_prepare:
 	mkdir -p docker/linux/arm64
 	mkdir -p docker/linux/arm/v7
 	cp target/x86_64-unknown-linux-gnu/release/fireguard docker/linux/amd64/fireguard
-	cp target/aarch64-unknown-linux-gnu/release/fireguard docker/linux/amd64/fireguard
+	cp target/aarch64-unknown-linux-gnu/release/fireguard docker/linux/arm64/fireguard
 	cp target/armv7-unknown-linux-musleabihf/release/fireguard docker/linux/arm/v7
 
 docker_build: docker_prepare

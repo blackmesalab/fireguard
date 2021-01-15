@@ -1,5 +1,6 @@
 extern crate async_trait;
 extern crate chrono;
+#[macro_use]
 extern crate clap;
 extern crate color_eyre;
 extern crate env_logger;
