@@ -1,8 +1,7 @@
 use clap::Clap;
 use color_eyre::eyre::{bail, Result};
 
-use crate::cmd::Fireguard;
-use crate::cmd::{Dns, Peer, Repo, Wg};
+use crate::cmd::{Daemon, Dns, Fireguard, Peer, Repo, Wg};
 use crate::shell::Shell;
 
 /// Docker - Docker command management
@@ -32,6 +31,8 @@ pub enum Action {
     Wg(Wg),
     /// DNS management under Docker
     Dns(Dns),
+    /// Daemon management
+    Daemon(Daemon),
 }
 
 impl Docker {
@@ -46,16 +47,10 @@ impl Docker {
             docker_cmd += &format!(" -v {}", volumes.join("-v "));
         } else {
             docker_cmd += " -v /etc/fireguard:/etc/fireguard";
-        } 
-        docker_cmd += &format!(" {} fireguard {}", self.docker_image(), args); 
+        }
+        docker_cmd += &format!(" {} fireguard {}", self.docker_image(), args);
         info!("Running command `{}` inside Docker container {}", args, self.docker_image());
-        let result = Shell::exec(
-            "docker",
-            &docker_cmd,
-            None,
-            false,
-        )
-        .await;
+        let result = Shell::exec("docker", &docker_cmd, None, false).await;
         if result.success() {
             debug!("Command {} succeeded inside Docker container {}", args, self.docker_image());
             Ok(())

@@ -1,9 +1,16 @@
 # 📰 Changelog 📰
 
+- [Version 0.0.5](#version-0.0.5)
 - [Version 0.0.4](#version-0.0.4)
 - [Version 0.0.3](#version-0.0.3)
 - [Version 0.0.2](#version-0.0.2)
 - [Version 0.0.1](#version-0.0.1)
+
+## Version 0.0.5
+* 161eb90 Update changelog for v0.0.5
+* fd05d6a Release version 0.0.5
+* 39d3c99 Add docker multi arch build directives to Makefile
+* 42ffe8e Fix #12. Move package installation to Fireguard startup to let it happen on the actual host and not during docker buildx, where apt causes many failures inside docker qemu.
 
 ## Version 0.0.4
 * 2c55318 Release version 0.0.4
