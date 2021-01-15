@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 use std::process::Stdio;
 
-use tokio::io::AsyncWriteExt;
+use futures_util::StreamExt;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::{Child, Command};
 
 pub struct Shell {}
 
+#[derive(Debug, Clone)]
 pub struct ShellResult {
     stdout: String,
     stderr: String,
@@ -28,25 +30,35 @@ impl ShellResult {
 }
 
 impl Shell {
-    async fn handle_stdout_stderr(&self, child: Child, sensitive: bool) -> ShellResult {
+    async fn handle_stdout_stderr(&self, mut child: Child, sensitive: bool) -> ShellResult {
+        let stdout = child.stdout.take().unwrap();
+        let stdout_result: Vec<_> = BufReader::new(stdout)
+            .lines()
+            .inspect(|l| {
+                if !sensitive {
+                    match l {
+                        Ok(ref e) =>  info!("Command stdout: {}", e.trim()),
+                        Err(e) => error!("Stdout error: {}", e)
+                    }
+                }
+            }).map(|l| l.unwrap_or("".to_string()))
+            .collect()
+            .await;
+        let stderr = child.stderr.take().unwrap();
+        let stderr_result: Vec<_> = BufReader::new(stderr)
+            .lines()
+            .inspect(|l| {
+                if !sensitive {
+                    match l {
+                        Ok(ref e) =>  warn!("Command stderr: {}", e.trim()),
+                        Err(e) => error!("Stderr error: {}", e)
+                    }
+                }
+            }).map(|l| l.unwrap_or("".to_string()))
+            .collect()
+            .await;
         match child.wait_with_output().await {
-            Ok(output) => {
-                let mut stdout = String::new();
-                let mut stderr = String::new();
-                if !output.stdout.is_empty() {
-                    stdout = String::from_utf8_lossy(&output.stdout).to_string();
-                    if !sensitive {
-                        info!("Command succeeded: {}, STDOUT:\n{}", output.status.success(), stdout.trim());
-                    }
-                }
-                if !output.stderr.is_empty() {
-                    stderr = String::from_utf8_lossy(&output.stderr).to_string();
-                    if !sensitive {
-                        info!("Command succeeded: {}, STDERR:\n{}", output.status.success(), stderr.trim());
-                    }
-                }
-                ShellResult::new(&stdout, &stderr, output.status.success())
-            }
+            Ok(output) => ShellResult::new(&stdout_result.join("\n"), &stderr_result.join("\n"), output.status.success()),
             Err(e) => {
                 error!("Error waiting for command output: {}", e);
                 ShellResult::new("", &e.to_string(), false)
