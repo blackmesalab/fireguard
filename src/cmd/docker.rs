@@ -3,6 +3,7 @@ use color_eyre::eyre::{bail, Result};
 
 use crate::cmd::{Daemon, Dns, Fireguard, Peer, Repo, Wg};
 use crate::shell::Shell;
+use crate::utils::install_wireguard_kernel_module;
 
 /// Docker - Docker command management
 #[derive(Clap, Debug)]
@@ -41,14 +42,17 @@ impl Docker {
     }
 
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
+        install_wireguard_kernel_module().await?;
         let args = fg.args.join(" ");
-        let mut docker_cmd = format!("run -ti --rm --privileged --net=host");
+        let mut docker_cmd = format!("run -t --rm --privileged --net=host");
+        // TODO: document how to use volumes, especially if there are plans for custom paths.
         if let Some(volumes) = self.docker_volumes.as_ref() {
             docker_cmd += &format!(" -v {}", volumes.join("-v "));
         } else {
             docker_cmd += " -v /etc/fireguard:/etc/fireguard";
+            docker_cmd += " -v /etc/wireguard:/etc/wireguard";
         }
-        docker_cmd += &format!(" {} fireguard {}", self.docker_image(), args);
+        docker_cmd += &format!(" {} {}", self.docker_image(), args);
         info!("Running command `{}` inside Docker container {}", args, self.docker_image());
         let result = Shell::exec("docker", &docker_cmd, None, false).await;
         if result.success() {
