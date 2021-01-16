@@ -1,3 +1,5 @@
+#![feature(str_split_once)]
+
 extern crate async_trait;
 extern crate chrono;
 #[macro_use]
