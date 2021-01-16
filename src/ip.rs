@@ -77,7 +77,8 @@ mod tests {
             assert_eq!(pool.free_list.len(), free_len);
             assert_eq!(pool.used_list.len(), used_len);
             for peer in peers {
-                assert!(!pool.free_list.contains(&Ipv4Addr::from_str(&peer.split_once("/").unwrap().0).unwrap()));
+                let ipaddr_peer = &Ipv4Addr::from_str(&(peer.splitn(2, "/").collect::<Vec<&str>>())[0]).unwrap();
+                assert!(!pool.free_list.contains(ipaddr_peer));
             }
         }
     }
