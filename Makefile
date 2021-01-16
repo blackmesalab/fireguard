@@ -18,6 +18,16 @@ raspberry_aarch64_debug:
 raspberry_aarch64:
 	cargo build --release --target=aarch64-unknown-linux-gnu 
 
+test:
+	cargo test
+
+coverage:
+ifeq ("", $(shell which cargo-tarpaulin))
+$(error "No cargo tarpaulin found in $(PATH), please install with cargo install cargo-tarpaulin if you want to run coverage")
+endif
+	cargo tarpaulin
+
+
 tag:
 	$(eval VERSION=$(shell target/debug/fireguard --version | sed 's#fireguard ##g'))
 	$(eval CHANGELOG=$(shell git log $(shell git describe --tags --abbrev=0)..HEAD --oneline))

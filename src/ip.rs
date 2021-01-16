@@ -53,3 +53,53 @@ impl IpPool {
         Ok(free_ip)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+    use std::str::FromStr;
+
+    use super::*;
+
+    #[test]
+    fn test_creation_with_expected_values() {
+        let mut data = Vec::new();
+        data.push((
+            "192.168.1.0/24",
+            vec!["192.168.1.1/32".to_string(), "192.168.1.234/32".to_string(), "192.168.1.2/32".to_string()],
+            251,
+            3,
+        ));
+        data.push(("10.0.0.0/16", vec![], 65534, 0));
+
+        for (subnet, peers, free_len, used_len) in data {
+            let pool = IpPool::new(subnet, peers.to_vec()).unwrap();
+            assert_eq!(pool.free_list.len(), free_len);
+            assert_eq!(pool.used_list.len(), used_len);
+            for peer in peers {
+                let ipaddr_peer = &Ipv4Addr::from_str(&(peer.splitn(2, "/").collect::<Vec<&str>>())[0]).unwrap();
+                assert!(!pool.free_list.contains(ipaddr_peer));
+            }
+        }
+    }
+
+    #[test]
+    fn test_generate_ip_is_in_subnet() {
+        let subnets = vec!["10.0.0.0/8", "10.10.0.0/16", "192.168.1.0/24", "192.168.1.0/31"];
+        for subnet in subnets {
+            let mut pool = IpPool::new(subnet, vec![]).unwrap();
+            let ip = pool.ip().unwrap();
+            let this: Ipv4Net = subnet.parse().unwrap();
+            assert!(this.contains(&ip));
+        }
+    }
+
+    #[test]
+    fn test_full_pool_bails() {
+        let mut pool =
+            IpPool::new("192.168.1.0/31", vec!["192.168.1.0/32".to_string(), "192.168.1.1/32".to_string()]).unwrap();
+        let err = pool.ip();
+        assert!(err.is_err());
+        assert_eq!(err.err().unwrap().to_string(), "Unable to find a free IPv4 in the pool");
+    }
+}
