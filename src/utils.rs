@@ -5,7 +5,7 @@ use log::LevelFilter;
 
 use crate::shell::Shell;
 
-pub const APT_PACKAGES_HOST: &str = "bc wireguard wireguard-dkms wireguard-tools";
+pub const APT_PACKAGES_HOST: &str = "bc wireguard wireguard-dkms wireguard-tools git";
 pub const APT_PACKAGES_DOCKER: &str = "bc ca-certificates dnsmasq iptables wireguard-tools iproute2";
 
 pub fn setup_logging(debug: bool) {
