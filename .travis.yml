@@ -47,7 +47,7 @@ deploy:
   provider: releases
   token: $GITHUB_TOKEN
   file_glob: true
-  file: $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
+  file: $CRATE_NAME-$TARGET.*
   on:
     repo: blackmesalab/fireguard
     tags: true
