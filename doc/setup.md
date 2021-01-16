@@ -1,3 +1,20 @@
+
+<!-- vim-markdown-toc Marked -->
+
+- [First run howto](#first-run-howto)
+  - [Rationale](#rationale)
+  - [Network topology and node setup](#network-topology-and-node-setup)
+  - [Network definition](#network-definition)
+    - [Security and trust considerations](#security-and-trust-considerations)
+  - [Installation on the hosts](#installation-on-the-hosts)
+  - [Pulling the network repository](#pulling-the-network-repository)
+    - [Cloning the repository for the first time](#cloning-the-repository-for-the-first-time)
+    - [Pulling a repository](#pulling-a-repository)
+  - [Rendering the wireguard configuration](#rendering-the-wireguard-configuration)
+  - [Running the wireguard docker container](#running-the-wireguard-docker-container)
+
+<!-- vim-markdown-toc -->
+
 # First run howto
 
 The following howto specifies how to configure and run the project, in the
