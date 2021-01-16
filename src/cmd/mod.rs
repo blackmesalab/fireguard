@@ -4,6 +4,7 @@ mod peer;
 mod repo;
 mod daemon;
 mod wg;
+mod upgrade;
 
 use std::env;
 use std::path::{Path, PathBuf};
@@ -20,6 +21,7 @@ use peer::Peer;
 use repo::Repo;
 use wg::Wg;
 use daemon::Daemon;
+use upgrade::Upgrade;
 
 /// Fireguard - wireguard autoconfiguration application
 #[derive(Clap, Debug)]
@@ -80,6 +82,7 @@ impl Fireguard {
             Action::Dns(ref action) => action.exec(self).await?,
             Action::Docker(ref action) => action.exec(self).await?,
             Action::Daemon(ref action) => action.exec(self).await?,
+            Action::Upgrade(ref action) => action.exec(self).await?,
         }
         Ok(())
     }
@@ -98,7 +101,9 @@ pub enum Action {
     /// Docker management
     Docker(Docker),
     /// Daemon management
-    Daemon(Daemon)
+    Daemon(Daemon),
+    /// Upgrade management
+    Upgrade(Upgrade)
 }
 
 #[async_trait]

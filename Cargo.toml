@@ -29,6 +29,7 @@ tera = "1"
 tokio = { version = "0.2", features = ["full"] }
 toml = "0.5"
 whoami = "1.0"
+guess_host_triple = "0.1.2"
 
 [dev-dependencies]
 serde_cbor = "0.11"
