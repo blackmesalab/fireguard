@@ -5,7 +5,7 @@ use log::LevelFilter;
 
 use crate::shell::Shell;
 
-pub const APT_PACKAGES_HOST: &str = "bc wireguard wireguard-dkms wireguard-tools";
+pub const APT_PACKAGES_HOST: &str = "bc wireguard wireguard-dkms wireguard-tools git";
 pub const APT_PACKAGES_DOCKER: &str = "bc ca-certificates dnsmasq iptables wireguard-tools iproute2";
 
 pub fn setup_logging(debug: bool) {
@@ -76,5 +76,16 @@ pub async fn install_packages_in_docker() -> Result<()> {
             APT_PACKAGES_DOCKER,
             apt_cmd.stderr()
         );
+    }
+}
+
+pub async fn enforce_host_config() -> Result<()> {
+    let uname_s= Shell::exec("uname", "-s", None, false).await;
+    let os = uname_s.stdout();
+    if os == "Linux" {
+        info!("The detected OS is {}, which is supported", os);
+        Ok(())
+    } else {
+        bail!("Unfortunately {} is not yet supported", os)
     }
 }
