@@ -78,3 +78,14 @@ pub async fn install_packages_in_docker() -> Result<()> {
         );
     }
 }
+
+pub async fn enforce_host_config() -> Result<()> {
+    let uname_s= Shell::exec("uname", "-s", None, false).await;
+    let os = uname_s.stdout();
+    if os == "Linux" {
+        info!("The detected OS is {}, which is supported", os);
+        Ok(())
+    } else {
+        bail!("Unfortunately {} is not yet supported", os)
+    }
+}
