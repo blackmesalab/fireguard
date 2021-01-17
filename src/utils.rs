@@ -84,8 +84,22 @@ pub async fn enforce_host_config() -> Result<()> {
     let os = uname_s.stdout();
     if os == "Linux" {
         info!("The detected OS is {}, which is supported", os);
-        Ok(())
     } else {
         bail!("Unfortunately {} is not yet supported", os)
+    };
+    let sysctl_status= Shell::exec("sysctl", "-n net.ipv4.ip_forward", None, false).await;
+    let forward_status = sysctl_status.stdout();
+    if forward_status == "1" {
+        info!("ipv4 forwarding already enabled");
+        Ok(())
+    } else {
+        info!("ipv4 forwarding disabled, trying to enable it");
+        let ipv4_fwd_enable = Shell::exec("sysctl", "-n net.ipv4.ip_forward=1", None, false).await;
+        if ipv4_fwd_enable.success() {
+            info!("Succesfully enabled ipv4 forwarding");
+            Ok(())
+        } else {
+            bail!("Unable to activate ipv4 forward: ");
+        }
     }
 }

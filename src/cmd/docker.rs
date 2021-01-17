@@ -4,6 +4,7 @@ use color_eyre::eyre::{bail, Result};
 use crate::cmd::{Daemon, Dns, Fireguard, Peer, Repo, Wg};
 use crate::shell::Shell;
 use crate::utils::install_wireguard_kernel_module;
+use crate::utils::enforce_host_config;
 
 /// Docker - Docker command management
 #[derive(Clap, Debug)]
@@ -47,6 +48,7 @@ impl Docker {
 
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
         install_wireguard_kernel_module().await?;
+        enforce_host_config().await?;
         let args = fg.args.join(" ");
         let mut docker_cmd = format!("run -t --rm --privileged --net=host");
         // TODO: document how to use volumes, especially if there are plans for custom paths.
