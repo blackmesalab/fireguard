@@ -106,7 +106,11 @@ impl Serve {
     }
 
     pub async fn exec(&self, fg: &Fireguard, repository: &str) -> Result<()> {
-        let upgrade = UpgradeBin::new(Duration::from_secs(self.wait_between_checks), &self.release_url, &fg.version);
+        let upgrade = UpgradeBin::new(
+            Duration::from_secs(self.wait_between_checks),
+            &self.release_url,
+            env!("CARGO_PKG_VERSION"),
+        );
         if let Some(pid) = fg.old_pid.as_ref() {
             let pid = pid.parse::<i32>()?;
             upgrade.terminate_old_process(pid)?;

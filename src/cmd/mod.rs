@@ -43,9 +43,6 @@ pub struct Fireguard {
     /// Cmdline args vec, do not use, it is autofilled
     #[clap(long = "args", default_values = &[])]
     pub args: Vec<String>,
-    /// Application version, do not use, it is autofilled
-    #[clap(long = "version", default_value = env!("CARGO_PKG_VERSION"))]
-    pub version: String,
 }
 
 impl Fireguard {
