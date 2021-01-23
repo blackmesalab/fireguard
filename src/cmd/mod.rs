@@ -3,7 +3,6 @@ mod dns;
 mod docker;
 mod peer;
 mod repo;
-mod upgrade;
 mod wg;
 
 use std::env;
@@ -20,7 +19,6 @@ use dns::Dns;
 use docker::Docker;
 use peer::Peer;
 use repo::Repo;
-use upgrade::Upgrade;
 use wg::Wg;
 
 /// Fireguard - wireguard autoconfiguration application
@@ -39,24 +37,32 @@ pub struct Fireguard {
     /// Enable debug logging
     #[clap(short = 'D', long = "debug")]
     pub debug: bool,
+    /// Old Fireguard PID, used to upgrade the binary on the flight
+    #[clap(short = 'o', long = "old-pid")]
+    pub old_pid: Option<String>,
     /// Cmdline args vec, do not use, it is autofilled
     #[clap(long = "args", default_values = &[])]
     pub args: Vec<String>,
+    /// Application version, do not use, it is autofilled
+    #[clap(long = "version", default_value = env!("CARGO_PKG_VERSION"))]
+    pub version: String,
 }
 
 impl Fireguard {
     async fn pre_checks(&mut self) -> Result<()> {
         let config = Path::new(&self.config_dir);
-        if config.is_dir() {
+    if config.is_dir() {
             let mut args = env::args().collect::<Vec<String>>();
             debug!("Command line args: [{}]", args.join(", "));
             if args[0].starts_with("target/") {
                 args.remove(0);
             }
-            for (idx, arg) in args.iter().enumerate() {
-                if arg == "docker" {
-                    args.remove(idx);
-                    break;
+            if Path::new("/.dockerenv").exists() {
+                for (idx, arg) in args.iter().enumerate() {
+                    if arg == "docker" {
+                        args.remove(idx);
+                        break; 
+                    }
                 }
             }
             debug!("Command line args after sanification: [{}]", args.join(", "));
@@ -82,7 +88,6 @@ impl Fireguard {
             Action::Dns(ref action) => action.exec(self).await?,
             Action::Docker(ref action) => action.exec(self).await?,
             Action::Daemon(ref action) => action.exec(self).await?,
-            Action::Upgrade(ref action) => action.exec(self).await?,
         }
         Ok(())
     }
@@ -102,8 +107,6 @@ pub enum Action {
     Docker(Docker),
     /// Daemon management
     Daemon(Daemon),
-    /// Upgrade management
-    Upgrade(Upgrade),
 }
 
 #[async_trait]

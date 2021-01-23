@@ -1,12 +1,17 @@
+use std::env;
+use std::net::IpAddr;
+use std::path::Path;
 use std::process;
+use std::time::Duration;
 
 use color_eyre::eyre::{bail, Result};
 use log::LevelFilter;
+use reqwest::Client;
 
 use crate::shell::Shell;
 
 pub const APT_PACKAGES_HOST: &str = "bc wireguard wireguard-dkms wireguard-tools git";
-pub const APT_PACKAGES_DOCKER: &str = "bc ca-certificates dnsmasq iptables wireguard-tools iproute2";
+pub static USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
 
 pub fn setup_logging(debug: bool) {
     let level = if debug { LevelFilter::Debug } else { LevelFilter::Info };
@@ -63,22 +68,6 @@ pub async fn install_wireguard_kernel_module() -> Result<()> {
     }
 }
 
-pub async fn install_packages_in_docker() -> Result<()> {
-    Shell::exec("apt-get", "update", None, false).await;
-    use crate::utils::install_packages_in_docker;
-    let apt_cmd = Shell::exec("apt-get", &format!("-y install {}", APT_PACKAGES_DOCKER), None, false).await;
-    if apt_cmd.success() {
-        info!("Packages {} installed inside Fireguard docker container:\n{}", APT_PACKAGES_DOCKER, apt_cmd.stdout());
-        Ok(())
-    } else {
-        bail!(
-            "Error installing packages {} inside Fireguard docker container:\n{}",
-            APT_PACKAGES_DOCKER,
-            apt_cmd.stderr()
-        );
-    }
-}
-
 pub async fn enforce_host_config() -> Result<()> {
     let uname_s = Shell::exec("uname", "-s", None, false).await;
     let os = uname_s.stdout();
@@ -102,4 +91,14 @@ pub async fn enforce_host_config() -> Result<()> {
             bail!("Unable to activate ipv4 forward: ");
         }
     }
+}
+
+pub fn build_reqwest_client(connect_timeout: Option<Duration>, request_timeout: Option<Duration>) -> Result<Client> {
+    Ok(Client::builder()
+        .user_agent(USER_AGENT)
+        .connect_timeout(connect_timeout.unwrap_or(Duration::from_millis(1500)))
+        .timeout(request_timeout.unwrap_or(Duration::from_millis(20000)))
+        .local_address(IpAddr::from([127, 0, 0, 1]))
+        .no_proxy()
+        .build()?)
 }

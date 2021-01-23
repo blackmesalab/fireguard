@@ -1,4 +1,5 @@
-use std::process;
+use std::time::Duration;
+use std::{env, process};
 
 use clap::Clap;
 use color_eyre::eyre::{bail, Result};
@@ -13,7 +14,7 @@ use crate::cmd::repo::Clone;
 use crate::cmd::wg::{Down, Render, Status as WgStatus, Up};
 use crate::cmd::{Command, Fireguard};
 use crate::config::Config;
-use crate::utils::install_packages_in_docker;
+use crate::upgrade::UpgradeBin;
 
 /// Daemon - Manage Fireguard daemon
 #[derive(Clap, Debug)]
@@ -72,6 +73,16 @@ pub struct Serve {
     /// Wireguard config file path
     #[clap(short = 'c', long = "config-dir", default_value = "/etc/wireguard")]
     pub config_dir: String,
+    /// How much to wait between upgrade checks
+    #[clap(short = 'w', long = "wait-between-checks", default_value = "43200")]
+    pub wait_between_checks: u64,
+    /// Github releases URL
+    #[clap(
+        short = 'r',
+        long = "release-url",
+        default_value = "https://api.github.com/repos/blackmesalab/fireguard/releases/latest"
+    )]
+    pub release_url: String,
 }
 
 impl Command for Serve {}
@@ -95,8 +106,13 @@ impl Serve {
     }
 
     pub async fn exec(&self, fg: &Fireguard, repository: &str) -> Result<()> {
+        let upgrade = UpgradeBin::new(Duration::from_secs(self.wait_between_checks), &self.release_url, &fg.version);
+        if let Some(pid) = fg.old_pid.as_ref() {
+            let pid = pid.parse::<i32>()?;
+            upgrade.terminate_old_process(pid)?;
+            upgrade.flip_binary_on_disk(env::current_exe()?).await?;
+        }
         info!("Starting Fireguard daemon in foreground");
-        install_packages_in_docker().await?;
         if let Some(repo) = self.repository_url.as_ref() {
             let clone = Clone {};
             clone.exec(fg, repo).await?;
@@ -115,6 +131,7 @@ impl Serve {
         up.exec(None, repository).await?;
         let repository_name = repository.to_owned();
         config.write_pid_file("fireguard", process::id()).await?;
+        upgrade.run_in_background(&fg.args).await?;
         info!("Fireguard daemon started successfully");
         self.handle_signals(config, repository_name).await?;
         Ok(())
