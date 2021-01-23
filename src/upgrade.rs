@@ -1,7 +1,7 @@
+use std::env;
 use std::path::PathBuf;
 use std::process::{self, Command};
 use std::time::Duration;
-use std::env;
 
 use color_eyre::eyre::{bail, Result};
 use nix::sys::signal;
@@ -14,7 +14,7 @@ use tokio::time;
 use crate::github::Releases;
 
 lazy_static! {
-    pub static ref NEW_VERSION_PATH: PathBuf = env::temp_dir(); 
+    pub static ref NEW_VERSION_PATH: PathBuf = env::temp_dir();
 }
 
 pub struct UpgradeBin {
@@ -51,33 +51,40 @@ impl UpgradeBin {
                         } else {
                             info!("Fireguard needs to be updated from {} to {}", self.current_tag, tag_name);
                             match releases.download().await {
-                                Ok(()) => {
-                                    match fork::daemon(true, true) {
-                                        Ok(fork::Fork::Child) => {
-                                            let mut cmd_args = vec!["--old-pid".to_string(), process::id().to_string()];
-                                            cmd_args.extend(task_args);
-                                            let result = Command::new(NEW_VERSION_PATH.as_path())
-                                                .args(cmd_args)
-                                                .spawn()
-                                                .unwrap()
-                                                .wait_with_output()
-                                                .unwrap()
-                                                .stdout;
-                                            info!(
-                                                "Forked new executable from {}: {}",
-                                                NEW_VERSION_PATH.display(),
-                                                String::from_utf8_lossy(&result)
-                                            );
-                                            break;
-                                        }
-                                        Ok(fork::Fork::Parent(pid)) => {
-                                            debug!("Double fork parent process PID {} noop operation", pid)
-                                        }
-                                        Err(e) => {
-                                            error!("Unable to daemonize new Fireguard instance: {}", e);
+                                Ok(()) => match fork::daemon(true, true) {
+                                    Ok(fork::Fork::Child) => {
+                                        let mut cmd_args = vec!["--old-pid".to_string(), process::id().to_string()];
+                                        cmd_args.extend(task_args.clone());
+                                        match Command::new(NEW_VERSION_PATH.as_path()).args(cmd_args).spawn() {
+                                            Ok(command) => match command.wait_with_output() {
+                                                Ok(output) => {
+                                                    info!(
+                                                        "Forked new executable from {}: {}",
+                                                        NEW_VERSION_PATH.display(),
+                                                        String::from_utf8_lossy(&output.stdout)
+                                                    );
+                                                    break;
+                                                }
+                                                Err(e) => {
+                                                    error!("Error extracting stdout from upgrade command: {}", e);
+                                                }
+                                            },
+                                            Err(e) => {
+                                                error!(
+                                                    "Error forking new executable from {}: {}",
+                                                    NEW_VERSION_PATH.display(),
+                                                    e
+                                                );
+                                            }
                                         }
                                     }
-                                }
+                                    Ok(fork::Fork::Parent(pid)) => {
+                                        debug!("Double fork parent process PID {} noop operation", pid)
+                                    }
+                                    Err(e) => {
+                                        error!("Unable to daemonize new Fireguard instance: {}", e);
+                                    }
+                                },
                                 Err(e) => {
                                     error!(
                                         "Unable to dowload Fireguard {}: {}, sleeping for {} seconds",
