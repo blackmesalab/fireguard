@@ -4,7 +4,8 @@ use std::path::Path;
 use clap::Clap;
 use color_eyre::eyre::{bail, Result};
 use tokio::fs;
-use tokio::stream::StreamExt;
+use tokio_stream::StreamExt;
+use tokio_stream::wrappers::ReadDirStream;
 
 use crate::cmd::{Command, Fireguard};
 use crate::shell::Shell;
@@ -109,7 +110,7 @@ impl List {
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
         match fs::read_dir(&fg.config_dir).await {
             Ok(dir) => {
-                let repos = dir.map(|res| res.map(|e| e.path())).collect::<Result<Vec<_>, io::Error>>().await?;
+                let repos = ReadDirStream::new(dir).map(|res| res.map(|e| e.path())).collect::<Result<Vec<_>, io::Error>>().await?;
                 info!("Avalilable trust repositoriers in Fireguard config directory: {:?}", repos);
                 Ok(())
             }

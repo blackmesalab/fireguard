@@ -5,6 +5,7 @@ use color_eyre::eyre::bail;
 use futures_util::StreamExt;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::{Child, Command};
+use tokio_stream::wrappers::LinesStream;
 
 pub struct Shell {}
 
@@ -70,8 +71,7 @@ impl Shell {
     async fn stream_stdout_stderr(&self, mut child: Child, sensitive: bool) -> ShellResult {
         let stdout = child.stdout.take().expect("Unable to take() child process stdout");
         let stderr = child.stderr.take().expect("Unable to take() child process stderr");
-        let stdout_result: Vec<_> = BufReader::new(stdout)
-            .lines()
+        let stdout_result: Vec<_> = LinesStream::new(BufReader::new(stdout).lines())
             .inspect(|l| {
                 if !sensitive {
                     match l {
@@ -83,8 +83,7 @@ impl Shell {
             .map(|l| l.unwrap_or("".to_string()))
             .collect()
             .await;
-        let stderr_result: Vec<_> = BufReader::new(stderr)
-            .lines()
+        let stderr_result: Vec<_> = LinesStream::new(BufReader::new(stderr).lines())
             .inspect(|l| {
                 if !sensitive {
                     match l {

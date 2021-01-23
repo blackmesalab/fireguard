@@ -46,14 +46,14 @@ pub struct Fireguard {
     #[clap(long = "args", default_values = &[])]
     pub args: Vec<String>,
     /// Application version, do not use, it is autofilled
-    #[clap(long = "version", default_value = "")]
+    #[clap(long = "version", default_value = env!("CARGO_PKG_VERSION"))]
     pub version: String,
 }
 
 impl Fireguard {
     async fn pre_checks(&mut self) -> Result<()> {
         let config = Path::new(&self.config_dir);
-        if config.is_dir() {
+    if config.is_dir() {
             let mut args = env::args().collect::<Vec<String>>();
             debug!("Command line args: [{}]", args.join(", "));
             if args[0].starts_with("target/") {
@@ -63,13 +63,12 @@ impl Fireguard {
                 for (idx, arg) in args.iter().enumerate() {
                     if arg == "docker" {
                         args.remove(idx);
-                        break;
+                        break; 
                     }
                 }
             }
             debug!("Command line args after sanification: [{}]", args.join(", "));
             self.args = args;
-            self.version = format!("v{}", env!("CARGO_PKG_VERSION"));
             Ok(())
         } else {
             bail!(
