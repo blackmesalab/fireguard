@@ -3,7 +3,6 @@ mod dns;
 mod docker;
 mod peer;
 mod repo;
-mod upgrade;
 mod wg;
 
 use std::env;
@@ -20,7 +19,6 @@ use dns::Dns;
 use docker::Docker;
 use peer::Peer;
 use repo::Repo;
-use upgrade::Upgrade;
 use wg::Wg;
 
 /// Fireguard - wireguard autoconfiguration application
@@ -90,7 +88,6 @@ impl Fireguard {
             Action::Dns(ref action) => action.exec(self).await?,
             Action::Docker(ref action) => action.exec(self).await?,
             Action::Daemon(ref action) => action.exec(self).await?,
-            Action::Upgrade(ref action) => action.exec(self).await?,
         }
         Ok(())
     }
@@ -110,8 +107,6 @@ pub enum Action {
     Docker(Docker),
     /// Daemon management
     Daemon(Daemon),
-    /// Upgrade management
-    Upgrade(Upgrade),
 }
 
 #[async_trait]
