@@ -7,13 +7,14 @@ edition = "2018"
 [dependencies]
 async-trait = "0.1.42"
 bollard = "0.9"
-chrono = { version = "0.4", default-features = false, features = ["clock"] }
-clap = "3.0.0-beta.2"
+chrono = "0.4"
+clap = { version = "3.0.0-beta.2", features = ["wrap_help"] }
 crossbeam-channel = "0.4"
 color-eyre = "0.5"
 env_logger = "0.8"
-flexi_logger = "0.17"
-futures-util = "0.3.9"
+fork = "0.1"
+futures-util = "0.3"
+guess_host_triple = "0.1"
 ipnet = "2.3"
 lazy_static = "1.4"
 log = "0.4"
@@ -21,15 +22,15 @@ nix = "0.19"
 openssl = { version = '0.10', features = ["vendored"] }
 parking_lot = { version = "0.11", features = ["deadlock_detection"] }
 pretty_env_logger = "0.4"
-rand = "0.8"
+rand = "0.8.2"
 read_input = "0.8"
-serde = { version = "1.0", features = ["derive"], default-features = false }
+reqwest = { version = "0.11.0", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
 signal-hook = "0.3"
 tera = "1"
 tokio = { version = "0.2", features = ["full"] }
 toml = "0.5"
 whoami = "1.0"
-guess_host_triple = "0.1.2"
 
 [dev-dependencies]
 serde_cbor = "0.11"

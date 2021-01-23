@@ -39,9 +39,15 @@ pub struct Fireguard {
     /// Enable debug logging
     #[clap(short = 'D', long = "debug")]
     pub debug: bool,
+    /// Old Fireguard PID, used to upgrade the binary on the flight
+    #[clap(short = 'o', long = "old-pid")]
+    pub old_pid: Option<String>,
     /// Cmdline args vec, do not use, it is autofilled
     #[clap(long = "args", default_values = &[])]
     pub args: Vec<String>,
+    /// Application version, do not use, it is autofilled
+    #[clap(long = "version", default_value = "")]
+    pub version: String,
 }
 
 impl Fireguard {
@@ -53,14 +59,17 @@ impl Fireguard {
             if args[0].starts_with("target/") {
                 args.remove(0);
             }
-            for (idx, arg) in args.iter().enumerate() {
-                if arg == "docker" {
-                    args.remove(idx);
-                    break;
+            if Path::new("/.dockerenv").exists() {
+                for (idx, arg) in args.iter().enumerate() {
+                    if arg == "docker" {
+                        args.remove(idx);
+                        break;
+                    }
                 }
             }
             debug!("Command line args after sanification: [{}]", args.join(", "));
             self.args = args;
+            self.version = format!("v{}", env!("CARGO_PKG_VERSION"));
             Ok(())
         } else {
             bail!(
