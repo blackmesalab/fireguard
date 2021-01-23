@@ -1,11 +1,19 @@
 # 📰 Changelog 📰
 
+- [Version 0.0.7](#version-0.0.7)
 - [Version 0.0.6](#version-0.0.6)
 - [Version 0.0.5](#version-0.0.5)
 - [Version 0.0.4](#version-0.0.4)
 - [Version 0.0.3](#version-0.0.3)
 - [Version 0.0.2](#version-0.0.2)
 - [Version 0.0.1](#version-0.0.1)
+
+## Version 0.0.7
+* a05b53a Release version 0.0.7 
+* 548be9a Many changes: 
+* Make endpoint optional when adding a peer 
+* Fix peer add command 
+* Run autoformat
 
 ## Version 0.0.6
 * 9c705fb Release version 0.0.6
