@@ -3,8 +3,8 @@ use color_eyre::eyre::{bail, Result};
 
 use crate::cmd::{Daemon, Dns, Fireguard, Peer, Repo, Wg};
 use crate::shell::Shell;
-use crate::utils::install_wireguard_kernel_module;
 use crate::utils::enforce_host_config;
+use crate::utils::install_wireguard_kernel_module;
 
 /// Docker - Docker command management
 #[derive(Clap, Debug)]

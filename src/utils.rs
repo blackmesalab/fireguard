@@ -80,14 +80,14 @@ pub async fn install_packages_in_docker() -> Result<()> {
 }
 
 pub async fn enforce_host_config() -> Result<()> {
-    let uname_s= Shell::exec("uname", "-s", None, false).await;
+    let uname_s = Shell::exec("uname", "-s", None, false).await;
     let os = uname_s.stdout();
     if os == "Linux" {
         info!("The detected OS is {}, which is supported", os);
     } else {
         bail!("Unfortunately {} is not yet supported", os)
     };
-    let sysctl_status= Shell::exec("sysctl", "-n net.ipv4.ip_forward", None, false).await;
+    let sysctl_status = Shell::exec("sysctl", "-n net.ipv4.ip_forward", None, false).await;
     let forward_status = sysctl_status.stdout();
     if forward_status == "1" {
         info!("ipv4 forwarding already enabled");

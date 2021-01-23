@@ -16,9 +16,9 @@ pub struct Upgrade {
 #[derive(Clap, Debug)]
 pub enum Action {
     // /// Check if new version is available
-    // Check(Check),
-    // /// Apply the available upgrade
-    // Apply(Apply),
+// Check(Check),
+// /// Apply the available upgrade
+// Apply(Apply),
 }
 
 impl Command for Upgrade {}

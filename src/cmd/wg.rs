@@ -5,7 +5,7 @@ use color_eyre::eyre::{bail, Result};
 use tokio::fs::read_to_string;
 
 use crate::cmd::{Command, Fireguard};
-use crate::wg::{WgQuick, WgConfig};
+use crate::wg::{WgConfig, WgQuick};
 
 /// Wg - Wireguard management
 #[derive(Clap, Debug)]
@@ -140,4 +140,3 @@ impl Status {
         Ok(())
     }
 }
-

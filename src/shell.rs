@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::process::Stdio;
 
+use color_eyre::eyre::bail;
 use futures_util::StreamExt;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::{Child, Command};
@@ -30,35 +31,75 @@ impl ShellResult {
 }
 
 impl Shell {
-    async fn handle_stdout_stderr(&self, mut child: Child, sensitive: bool) -> ShellResult {
-        let stdout = child.stdout.take().unwrap();
+    async fn handle_stdout_stderr(&self, child: Child, sensitive: bool) -> ShellResult {
+        // TODO: this method is needed because we cannot stream stdout / stderr when stdin
+        // handling is involved. We have 0 clues why, we are not smart enough to understand
+        // tokio in its fullness.
+        //
+        // Ideas: https://github.com/tokio-rs/tokio/issues/2199
+        //
+        // So we implemented this non streaming method to overcome the limitation and thus be
+        // able to generate Wireguard private and public key.
+        // This might be automatically solved when we move to tokio 1 or when someone smarter
+        // comes around and fix this.
+        match child.wait_with_output().await {
+            Ok(output) => {
+                let mut stdout = String::new();
+                let mut stderr = String::new();
+                if !output.stdout.is_empty() {
+                    stdout = String::from_utf8_lossy(&output.stdout).to_string();
+                    if !sensitive {
+                        info!("Command stdout: {}", stdout.trim());
+                    }
+                }
+                if !output.stderr.is_empty() {
+                    stderr = String::from_utf8_lossy(&output.stderr).to_string();
+                    if !sensitive {
+                        info!("Command stderr: {}", stderr.trim());
+                    }
+                }
+                ShellResult::new(&stdout, &stderr, output.status.success())
+            }
+            Err(e) => {
+                error!("Error waiting for command output: {}", e);
+                ShellResult::new("", &e.to_string(), false)
+            }
+        }
+    }
+
+    async fn stream_stdout_stderr(&self, mut child: Child, sensitive: bool) -> ShellResult {
+        let stdout = child.stdout.take().expect("Unable to take() child process stdout");
+        let stderr = child.stderr.take().expect("Unable to take() child process stderr");
         let stdout_result: Vec<_> = BufReader::new(stdout)
             .lines()
             .inspect(|l| {
                 if !sensitive {
                     match l {
-                        Ok(ref e) =>  info!("Command stdout: {}", e.trim()),
-                        Err(e) => error!("Stdout error: {}", e)
+                        Ok(ref e) => info!("Command stdout: {}", e.trim()),
+                        Err(e) => error!("Stdout error: {}", e),
                     }
                 }
-            }).map(|l| l.unwrap_or("".to_string()))
+            })
+            .map(|l| l.unwrap_or("".to_string()))
             .collect()
             .await;
-        let stderr = child.stderr.take().unwrap();
         let stderr_result: Vec<_> = BufReader::new(stderr)
             .lines()
             .inspect(|l| {
                 if !sensitive {
                     match l {
-                        Ok(ref e) =>  warn!("Command stderr: {}", e.trim()),
-                        Err(e) => error!("Stderr error: {}", e)
+                        Ok(ref e) => warn!("Command stderr: {}", e.trim()),
+                        Err(e) => error!("Stderr error: {}", e),
                     }
                 }
-            }).map(|l| l.unwrap_or("".to_string()))
+            })
+            .map(|l| l.unwrap_or("".to_string()))
             .collect()
             .await;
         match child.wait_with_output().await {
-            Ok(output) => ShellResult::new(&stdout_result.join("\n"), &stderr_result.join("\n"), output.status.success()),
+            Ok(output) => {
+                ShellResult::new(&stdout_result.join("\n"), &stderr_result.join("\n"), output.status.success())
+            }
             Err(e) => {
                 error!("Error waiting for command output: {}", e);
                 ShellResult::new("", &e.to_string(), false)
@@ -67,16 +108,22 @@ impl Shell {
     }
 
     async fn handle_stdin(&self, stdin: &str, child: &mut Child, sensitive: bool) -> ShellResult {
-        match child.stdin.as_mut().unwrap().write_all(stdin.as_bytes()).await {
-            Ok(_) => {
-                if !sensitive {
-                    info!("Written {} bytes into command STDIN:\n{}", stdin.len(), stdin);
+        match child.stdin.as_mut() {
+            Some(child) => match child.write(stdin.as_bytes()).await {
+                Ok(n) => {
+                    if !sensitive {
+                        info!("Written {} bytes into command STDIN:\n{}", n, stdin);
+                    }
+                    ShellResult::new("Ok", "", true)
                 }
-                ShellResult::new("Ok", "", true)
-            }
-            Err(e) => {
-                error!("Unable to write to command STDIN: {}", e);
-                ShellResult::new("", &e.to_string(), false)
+                Err(e) => {
+                    error!("Unable to write to command STDIN: {}", e);
+                    ShellResult::new("", &e.to_string(), false)
+                }
+            },
+            None => {
+                error!("Stdin for process is not available");
+                ShellResult::new("", "Stdin for process is not available", false)
             }
         }
     }
@@ -117,7 +164,7 @@ impl Shell {
             .stderr(Stdio::piped())
             .spawn()
         {
-            Ok(child) => shell.handle_stdout_stderr(child, sensitive).await,
+            Ok(child) => shell.stream_stdout_stderr(child, sensitive).await,
             Err(e) => {
                 error!("Command {} {} failed: {}", command, args, e);
                 ShellResult::new("", &e.to_string(), false)
@@ -143,7 +190,7 @@ impl Shell {
             .stderr(Stdio::piped())
             .spawn()
         {
-            Ok(child) => shell.handle_stdout_stderr(child, sensitive).await,
+            Ok(child) => shell.stream_stdout_stderr(child, sensitive).await,
             Err(e) => {
                 error!("Command {} {} failed: {}", command, args, e);
                 ShellResult::new("", &e.to_string(), false)

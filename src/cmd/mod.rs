@@ -1,10 +1,10 @@
+mod daemon;
 mod dns;
 mod docker;
 mod peer;
 mod repo;
-mod daemon;
-mod wg;
 mod upgrade;
+mod wg;
 
 use std::env;
 use std::path::{Path, PathBuf};
@@ -15,13 +15,13 @@ use color_eyre::eyre::{bail, Result};
 
 use crate::config::Config;
 
+use daemon::Daemon;
 use dns::Dns;
 use docker::Docker;
 use peer::Peer;
 use repo::Repo;
-use wg::Wg;
-use daemon::Daemon;
 use upgrade::Upgrade;
+use wg::Wg;
 
 /// Fireguard - wireguard autoconfiguration application
 #[derive(Clap, Debug)]
@@ -36,7 +36,7 @@ pub struct Fireguard {
     /// Config file
     #[clap(short = 'C', long = "config-file", default_value = "nodes.toml")]
     pub config_file: String,
-    /// Config file
+    /// Enable debug logging
     #[clap(short = 'D', long = "debug")]
     pub debug: bool,
     /// Cmdline args vec, do not use, it is autofilled
@@ -103,7 +103,7 @@ pub enum Action {
     /// Daemon management
     Daemon(Daemon),
     /// Upgrade management
-    Upgrade(Upgrade)
+    Upgrade(Upgrade),
 }
 
 #[async_trait]
