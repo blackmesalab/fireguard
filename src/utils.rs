@@ -11,7 +11,6 @@ use reqwest::Client;
 use crate::shell::Shell;
 
 pub const APT_PACKAGES_HOST: &str = "bc wireguard wireguard-dkms wireguard-tools git";
-pub const APT_PACKAGES_DOCKER: &str = "bc ca-certificates dnsmasq iptables wireguard-tools iproute2";
 pub static USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
 
 pub fn setup_logging(debug: bool) {
@@ -66,30 +65,6 @@ pub async fn install_wireguard_kernel_module() -> Result<()> {
         } else {
             bail!("Unable to find kernel header for kernel version {}, Wireguard module not installed", kver);
         }
-    }
-}
-
-pub async fn install_packages_in_docker() -> Result<()> {
-    if Path::new("/.dockerenv").exists() {
-        Shell::exec("apt-get", "update", None, false).await;
-        let apt_cmd = Shell::exec("apt-get", &format!("-y install {}", APT_PACKAGES_DOCKER), None, false).await;
-        if apt_cmd.success() {
-            info!(
-                "Packages {} installed inside Fireguard docker container:\n{}",
-                APT_PACKAGES_DOCKER,
-                apt_cmd.stdout()
-            );
-            Ok(())
-        } else {
-            bail!(
-                "Error installing packages {} inside Fireguard docker container:\n{}",
-                APT_PACKAGES_DOCKER,
-                apt_cmd.stderr()
-            );
-        }
-    } else {
-        debug!("Not running inside docker, skipping apt package installation");
-        Ok(())
     }
 }
 

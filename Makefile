@@ -49,20 +49,24 @@ docker_prepare:
 	mkdir -p docker/linux/arm/v7
 	cp target/x86_64-unknown-linux-gnu/release/fireguard docker/linux/amd64/fireguard
 	cp target/aarch64-unknown-linux-gnu/release/fireguard docker/linux/arm64/fireguard
-	cp target/armv7-unknown-linux-musleabihf/release/fireguard docker/linux/arm/v7
+	cp target/armv7-unknown-linux-gnueabihf/release/fireguard docker/linux/arm/v7
 
-docker_build: docker_prepare
-	$(eval VERSION=$(shell target/x86_64-unknown-linux-gnu/release/fireguard --version | sed 's#fireguard ##g'))
-	docker buildx create --use --name=qemu || echo "Already exist"
-	docker buildx inspect --bootstrap
-	docker buildx build --platform linux/arm64,linux/arm/v7 -t blackmesalab/fireguard:latest docker 
-	docker buildx build --platform linux/arm64,linux/arm/v7 -t blackmesalab/fireguard:$(VERSION) docker 
-	docker buildx build --load --platform linux/amd64 -t blackmesalab/fireguard:latest docker 
-	docker buildx build --load --platform linux/amd64 -t blackmesalab/fireguard:$(VERSION) docker 
+docker_buildx_setup:
+	docker buildx use multiarch || (docker run --rm --privileged multiarch/qemu-user-static --reset -p yes && \
+		docker buildx create --name multiarch --driver docker-container --use)
 
-docker_push: docker_prepare
+docker_build: docker_prepare docker_buildx_setup
 	$(eval VERSION=$(shell target/x86_64-unknown-linux-gnu/release/fireguard --version | sed 's#fireguard ##g'))
-	docker buildx create --use --name=qemu || echo "Already exist"
-	docker buildx inspect --bootstrap
-	docker buildx build --push --platform linux/amd64,linux/arm64,linux/arm/v7 -t blackmesalab/fireguard:latest docker 
-	docker buildx build --push --platform linux/amd64,linux/arm64,linux/arm/v7 -t blackmesalab/fireguard:$(VERSION) docker 
+	docker buildx use multiarch && \
+		docker buildx inspect --bootstrap && \
+		docker buildx build --platform linux/arm64,linux/arm/v7 -t blackmesalab/fireguard:latest docker && \
+		docker buildx build --platform linux/arm64,linux/arm/v7 -t blackmesalab/fireguard:$(VERSION) docker && \
+		docker buildx build --load --platform linux/amd64 -t blackmesalab/fireguard:latest docker && \
+		docker buildx build --load --platform linux/amd64 -t blackmesalab/fireguard:$(VERSION) docker 
+
+docker_push: docker_prepare docker_buildx_setup
+	$(eval VERSION=$(shell target/x86_64-unknown-linux-gnu/release/fireguard --version | sed 's#fireguard ##g'))
+	docker buildx use multiarch && \
+		docker buildx inspect --bootstrap && \
+		docker buildx build --push --platform linux/amd64,linux/arm64,linux/arm/v7 -t blackmesalab/fireguard:latest docker && \
+		docker buildx build --push --platform linux/amd64,linux/arm64,linux/arm/v7 -t blackmesalab/fireguard:$(VERSION) docker 

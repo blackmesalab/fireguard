@@ -15,7 +15,6 @@ use crate::cmd::wg::{Down, Render, Status as WgStatus, Up};
 use crate::cmd::{Command, Fireguard};
 use crate::config::Config;
 use crate::upgrade::UpgradeBin;
-use crate::utils::install_packages_in_docker;
 
 /// Daemon - Manage Fireguard daemon
 #[derive(Clap, Debug)]
@@ -114,7 +113,6 @@ impl Serve {
             upgrade.flip_binary_on_disk(env::current_exe()?).await?;
         }
         info!("Starting Fireguard daemon in foreground");
-        install_packages_in_docker().await?;
         if let Some(repo) = self.repository_url.as_ref() {
             let clone = Clone {};
             clone.exec(fg, repo).await?;
