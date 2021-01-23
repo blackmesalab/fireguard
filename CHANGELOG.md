@@ -1,5 +1,6 @@
 # 📰 Changelog 📰
 
+- [Version 0.0.8](#version-0.0.8)
 - [Version 0.0.7](#version-0.0.7)
 - [Version 0.0.6](#version-0.0.6)
 - [Version 0.0.5](#version-0.0.5)
@@ -7,6 +8,14 @@
 - [Version 0.0.3](#version-0.0.3)
 - [Version 0.0.2](#version-0.0.2)
 - [Version 0.0.1](#version-0.0.1)
+
+## Version 0.0.8
+* dc87a0c Release version 0.0.8
+* Self upgrade implementation
+* Migrate to tokio 1.0
+* Fix docker multiarch
+* Remove now useless Upgrade command
+* Make upgrade infallible
 
 ## Version 0.0.7
 * a05b53a Release version 0.0.7 
