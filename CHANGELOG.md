@@ -1,5 +1,6 @@
 # 📰 Changelog 📰
 
+- [Version 0.0.9](#version-0.0.9)
 - [Version 0.0.8](#version-0.0.8)
 - [Version 0.0.7](#version-0.0.7)
 - [Version 0.0.6](#version-0.0.6)
@@ -8,6 +9,10 @@
 - [Version 0.0.3](#version-0.0.3)
 - [Version 0.0.2](#version-0.0.2)
 - [Version 0.0.1](#version-0.0.1)
+
+## Version 0.0.9
+* 672cd37 Release version 0.0.9 
+* 7676776 Fix version management which cannot be done via clap without braking
 
 ## Version 0.0.8
 * dc87a0c Release version 0.0.8
