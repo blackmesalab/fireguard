@@ -28,7 +28,7 @@ endif
 	cargo tarpaulin
 
 
-tag:
+tag: debug
 	$(eval VERSION=$(shell target/debug/fireguard --version | sed 's#fireguard ##g'))
 	$(eval CHANGELOG=$(shell git log $(shell git describe --tags --abbrev=0)..HEAD --oneline))
 	@echo The changelog from the previous tag to $(VERSION) is:$(CHANGELOG)
