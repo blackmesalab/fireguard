@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::process::Stdio;
 
-use color_eyre::eyre::bail;
 use futures_util::StreamExt;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::{Child, Command};
@@ -171,6 +170,7 @@ impl Shell {
         }
     }
 
+    #[allow(dead_code)]
     pub async fn exec_with_env(
         command: &str,
         args: &str,
@@ -229,6 +229,7 @@ impl Shell {
         }
     }
 
+    #[allow(dead_code)]
     pub async fn exec_with_input_and_env(
         command: &str,
         args: &str,

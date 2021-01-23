@@ -150,8 +150,8 @@ impl Releases {
         Ok(releases)
     }
 
-    pub async fn download_for_triple(self, triple: &str) -> Result<()> {
-        let asset = self.assets.into_iter().find(|a| a.name == format!("fireguard-{}.tar.gz", triple));
+    pub async fn download_for_triple(self, triple: &str, tag_name: &str) -> Result<()> {
+        let asset = self.assets.into_iter().find(|a| a.name == format!("fireguard-{}-{}.tar.gz", tag_name, triple));
         match asset {
             Some(asset) => {
                 let data = self.http_cli.get(&asset.browser_download_url).send().await?.bytes().await?;
@@ -165,7 +165,7 @@ impl Releases {
         Ok(())
     }
 
-    pub async fn download(self) -> Result<()> {
+    pub async fn download(self, tag_name: &str) -> Result<()> {
         let host_triple = match guess_host_triple() {
             Some(t) => {
                 info!("Found rustc triple for current host: {}", t);
@@ -173,6 +173,6 @@ impl Releases {
             }
             None => bail!("Unable to find rustc host triple for current intallation"),
         };
-        Ok(self.download_for_triple(host_triple).await?)
+        Ok(self.download_for_triple(host_triple, tag_name).await?)
     }
 }

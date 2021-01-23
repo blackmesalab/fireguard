@@ -3,12 +3,12 @@ use std::path::PathBuf;
 use std::process::{self, Command};
 use std::time::Duration;
 
-use color_eyre::eyre::{bail, Result};
+use color_eyre::eyre::Result;
 use nix::sys::signal;
 use nix::unistd::Pid;
 use rand::Rng;
 use tokio::fs;
-use tokio::task::{self, JoinHandle};
+use tokio::task;
 use tokio::time;
 
 use crate::github::Releases;
@@ -50,7 +50,7 @@ impl UpgradeBin {
                             );
                         } else {
                             info!("Fireguard needs to be updated from {} to {}", self.current_tag, tag_name);
-                            match releases.download().await {
+                            match releases.download(&tag_name).await {
                                 Ok(()) => match fork::daemon(true, true) {
                                     Ok(fork::Fork::Child) => {
                                         let mut cmd_args = vec!["--old-pid".to_string(), process::id().to_string()];
@@ -121,13 +121,5 @@ impl UpgradeBin {
     pub fn terminate_old_process(&self, pid: i32) -> Result<()> {
         info!("Terminating old Fireguard instance with PID {}", pid);
         Ok(signal::kill(Pid::from_raw(pid), signal::SIGINT)?)
-    }
-}
-
-pub struct UpdateRepo {}
-
-impl UpdateRepo {
-    pub fn new() -> Self {
-        UpdateRepo {}
     }
 }
