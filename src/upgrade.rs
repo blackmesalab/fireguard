@@ -15,6 +15,7 @@ use crate::github::Releases;
 
 lazy_static! {
     pub static ref NEW_VERSION_PATH: PathBuf = env::temp_dir();
+    pub static ref NEW_VERSION_FILE: PathBuf = NEW_VERSION_PATH.join("fireguard");
 }
 
 pub struct UpgradeBin {
@@ -34,8 +35,8 @@ impl UpgradeBin {
         Duration::from_secs(value)
     }
 
-    pub async fn run_in_background(self, args: &Vec<String>) -> Result<()> {
-        let task_args = args.clone();
+    pub async fn run_in_background(self, args: &[String]) -> Result<()> {
+        let task_args = args.to_vec();
         task::spawn(async move {
             loop {
                 let wait_duration = self.wait_between_checks + self.calculate_jitter();

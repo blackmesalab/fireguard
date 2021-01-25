@@ -98,7 +98,7 @@ impl Serve {
                     .remove_pid_file("fireguard")
                     .await
                     .unwrap_or_else(|_| error!("Unable to remove PID file for wireguard"));
-                return;
+                break;
             }
         });
         t.await?;

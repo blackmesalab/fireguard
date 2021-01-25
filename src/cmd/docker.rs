@@ -50,7 +50,7 @@ impl Docker {
         install_wireguard_kernel_module().await?;
         enforce_host_config().await?;
         let args = fg.args.join(" ");
-        let mut docker_cmd = format!("run -t --rm --privileged --net=host");
+        let mut docker_cmd = "run -t --rm --privileged --net=host".to_string();
         // TODO: document how to use volumes, especially if there are plans for custom paths.
         if let Some(volumes) = self.docker_volumes.as_ref() {
             docker_cmd += &format!(" -v {}", volumes.join("-v "));
