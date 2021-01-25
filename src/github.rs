@@ -4,7 +4,8 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tokio::{fs, io::AsyncWriteExt};
 
-use crate::upgrade::NEW_VERSION_PATH;
+use crate::shell::Shell;
+use crate::upgrade::{NEW_VERSION_FILE, NEW_VERSION_PATH};
 use crate::utils::build_reqwest_client;
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
@@ -151,14 +152,33 @@ impl Releases {
     }
 
     pub async fn download_for_triple(self, triple: &str, tag_name: &str) -> Result<()> {
-        let asset = self.assets.into_iter().find(|a| a.name == format!("fireguard-{}-{}.tar.gz", tag_name, triple));
+        let tar_file = format!("fireguard-{}-{}.tar.gz", tag_name, triple);
+        let asset = self.assets.into_iter().find(|a| a.name == tar_file);
         match asset {
             Some(asset) => {
                 let data = self.http_cli.get(&asset.browser_download_url).send().await?.bytes().await?;
                 info!("Downloaded new version {} from {}", self.tag_name, asset.browser_download_url);
-                let mut file = fs::File::create(NEW_VERSION_PATH.as_path()).await?;
+                let filename = NEW_VERSION_PATH.join(asset.name);
+                let mut file = fs::File::create(&filename).await?;
                 file.write_all(&data).await?;
-                info!("Stored new version {} on {}", self.tag_name, NEW_VERSION_PATH.display());
+                info!("Stored new version {} on {}", self.tag_name, filename.display());
+                let result = Shell::exec(
+                    "tar",
+                    &format!("xfvz {}", tar_file),
+                    Some(NEW_VERSION_PATH.to_str().unwrap_or_default()),
+                    false,
+                )
+                .await;
+                if result.success() {
+                    info!("Exracted new version {} on {}", self.tag_name, NEW_VERSION_FILE.display());
+                } else {
+                    bail!(
+                        "Unable to extractract new version {} on {}: {}",
+                        self.tag_name,
+                        NEW_VERSION_FILE.display(),
+                        result.stderr()
+                    );
+                }
             }
             None => bail!("Unable to find a valid asset for release {} on {}", self.tag_name, triple),
         }
