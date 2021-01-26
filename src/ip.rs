@@ -41,7 +41,7 @@ impl IpPool {
             Some(free_ip) => free_ip,
             None => bail!("Unable to find a free IPv4 in the pool"),
         };
-        let free_ip = free_ip.clone();
+        let free_ip = *free_ip;
         self.free_list.retain(|&x| x != free_ip);
         self.used_list.push(free_ip);
         info!(
@@ -56,7 +56,6 @@ impl IpPool {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
     use std::str::FromStr;
 
     use super::*;

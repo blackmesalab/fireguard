@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::process::Stdio;
 
-use color_eyre::eyre::bail;
 use futures_util::StreamExt;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::{Child, Command};
@@ -80,7 +79,7 @@ impl Shell {
                     }
                 }
             })
-            .map(|l| l.unwrap_or("".to_string()))
+            .map(|l| l.unwrap_or_else(|_| "".to_string()))
             .collect()
             .await;
         let stderr_result: Vec<_> = LinesStream::new(BufReader::new(stderr).lines())
@@ -92,7 +91,7 @@ impl Shell {
                     }
                 }
             })
-            .map(|l| l.unwrap_or("".to_string()))
+            .map(|l| l.unwrap_or_else(|_| "".to_string()))
             .collect()
             .await;
         match child.wait_with_output().await {
@@ -158,7 +157,7 @@ impl Shell {
         shell.log_exec_info(command, args, cwd, false, &HashMap::new(), sensitive);
         match Command::new(command)
             .current_dir(cwd)
-            .args(args.split(" ").collect::<Vec<&str>>())
+            .args(args.split(' ').collect::<Vec<&str>>())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
@@ -171,6 +170,7 @@ impl Shell {
         }
     }
 
+    #[allow(dead_code)]
     pub async fn exec_with_env(
         command: &str,
         args: &str,
@@ -183,7 +183,7 @@ impl Shell {
         shell.log_exec_info(command, args, cwd, false, &HashMap::new(), sensitive);
         match Command::new(command)
             .current_dir(cwd)
-            .args(args.split(" ").collect::<Vec<&str>>())
+            .args(args.split(' ').collect::<Vec<&str>>())
             .envs(env)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -209,7 +209,7 @@ impl Shell {
         shell.log_exec_info(command, args, cwd, true, &HashMap::new(), sensitive);
         match Command::new(command)
             .current_dir(cwd)
-            .args(args.split(" ").collect::<Vec<&str>>())
+            .args(args.split(' ').collect::<Vec<&str>>())
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -229,6 +229,7 @@ impl Shell {
         }
     }
 
+    #[allow(dead_code)]
     pub async fn exec_with_input_and_env(
         command: &str,
         args: &str,
@@ -242,7 +243,7 @@ impl Shell {
         shell.log_exec_info(command, args, cwd, true, &env, sensitive);
         match Command::new(command)
             .current_dir(cwd)
-            .args(args.split(" ").collect::<Vec<&str>>())
+            .args(args.split(' ').collect::<Vec<&str>>())
             .envs(env)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())

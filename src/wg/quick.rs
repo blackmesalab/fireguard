@@ -3,36 +3,6 @@ use color_eyre::eyre::{bail, Result};
 use crate::shell::Shell;
 
 #[derive(Default, Debug, Clone)]
-pub struct WgStatus {
-    pub repository: String,
-    pub public_key: String,
-    pub private_key: String,
-    pub listen_port: u32,
-    pub fwmark: u32,
-    pub table: Option<u32>,
-    pub peers: Vec<WgPeer>,
-}
-
-impl WgStatus {
-    pub fn new(status: &str, peers: Vec<WgPeer>) -> Result<Self> {
-        let status = status.split(" ").collect::<Vec<&str>>();
-        if !status.is_empty() {
-            Ok(Self {
-                repository: status[0].to_string(),
-                public_key: status[1].to_string(),
-                private_key: status[2].to_string(),
-                listen_port: status[3].parse::<u32>()?,
-                fwmark: status[4].parse::<u32>()?,
-                table: None,
-                peers,
-            })
-        } else {
-            Ok(WgStatus::default())
-        }
-    }
-}
-
-#[derive(Default, Debug, Clone)]
 pub struct WgPeer {
     endpoint: Option<String>,
     public_key: String,
@@ -42,8 +12,6 @@ pub struct WgPeer {
     persistent_keepalive: Option<u32>,
     allowed_ips: Vec<String>,
 }
-
-impl WgPeer {}
 
 pub struct WgQuick {
     repository: String,

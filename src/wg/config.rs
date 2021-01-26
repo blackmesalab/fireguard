@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::Path;
 
 use color_eyre::eyre::{bail, Result};
 use parking_lot::Mutex;
@@ -71,11 +71,11 @@ impl WgConfig {
                 my_peer.address.clone(),
                 private_key.to_string(),
                 my_peer.listen_port,
-                my_peer.pre_up.clone().unwrap_or(Vec::new()),
-                my_peer.post_up.clone().unwrap_or(Vec::new()),
-                my_peer.pre_down.clone().unwrap_or(Vec::new()),
-                my_peer.post_down.clone().unwrap_or(Vec::new()),
-                my_peer.dns.clone().unwrap_or(Vec::new()),
+                my_peer.pre_up.clone().unwrap_or_default(),
+                my_peer.post_up.clone().unwrap_or_default(),
+                my_peer.pre_down.clone().unwrap_or_default(),
+                my_peer.post_down.clone().unwrap_or_default(),
+                my_peer.dns.clone().unwrap_or_default(),
                 my_peer.table.unwrap_or(0),
                 my_peer.fwmark.unwrap_or(0),
                 wg_peers,
@@ -86,7 +86,7 @@ impl WgConfig {
         }
     }
 
-    pub async fn render(&self, config_path: &PathBuf) -> Result<()> {
+    pub async fn render(&self, config_path: &Path) -> Result<()> {
         info!("Rendering Wireguard configuration on {}", config_path.display());
         let mut wg_tera = Tera::default();
         wg_tera.add_raw_template("wireguard.txt", WIREGARD_CONFIG_TMPL)?;
@@ -115,6 +115,7 @@ pub struct Host {
 }
 
 impl Host {
+    #![allow(clippy::too_many_arguments)]
     pub fn new(
         repository: String,
         name: String,

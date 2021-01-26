@@ -1,6 +1,5 @@
 use std::env;
 use std::net::IpAddr;
-use std::path::Path;
 use std::process;
 use std::time::Duration;
 
@@ -96,8 +95,8 @@ pub async fn enforce_host_config() -> Result<()> {
 pub fn build_reqwest_client(connect_timeout: Option<Duration>, request_timeout: Option<Duration>) -> Result<Client> {
     Ok(Client::builder()
         .user_agent(USER_AGENT)
-        .connect_timeout(connect_timeout.unwrap_or(Duration::from_millis(1500)))
-        .timeout(request_timeout.unwrap_or(Duration::from_millis(20000)))
+        .connect_timeout(connect_timeout.unwrap_or_else(|| Duration::from_millis(1500)))
+        .timeout(request_timeout.unwrap_or_else(|| Duration::from_millis(20000)))
         .local_address(IpAddr::from([127, 0, 0, 1]))
         .no_proxy()
         .build()?)

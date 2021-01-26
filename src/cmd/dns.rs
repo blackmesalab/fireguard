@@ -120,7 +120,8 @@ impl Render {
                     .peers
                     .values()
                     .map(|x| {
-                        let ip = x.address.parse::<Ipv4Net>().unwrap_or("127.0.0.1/8".parse::<Ipv4Net>().unwrap());
+                        let ip =
+                            x.address.parse::<Ipv4Net>().unwrap_or_else(|_| "127.0.0.1/8".parse::<Ipv4Net>().unwrap());
                         DnsEntry::new(
                             &ip.addr().to_string(),
                             &format!("{}.{}.{}", x.peername, x.username, config.domain),

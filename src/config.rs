@@ -23,7 +23,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub async fn load(path: &PathBuf) -> Result<Self> {
+    pub async fn load(path: &Path) -> Result<Self> {
         let data = fs::read_to_string(path).await?;
         let mut config: Config = toml::from_str(&data)?;
         config.network_addr = config.network.parse::<Ipv4Net>()?;
@@ -31,7 +31,7 @@ impl Config {
         Ok(config)
     }
 
-    pub async fn save(&self, path: &PathBuf) -> Result<()> {
+    pub async fn save(&self, path: &Path) -> Result<()> {
         let _ = self.mutex.lock();
         let data = toml::to_string(self)?;
         fs::write(path, data).await?;
@@ -97,13 +97,14 @@ pub struct Peer {
 }
 
 impl Peer {
+    #![allow(clippy::too_many_arguments)]
     pub fn new(
         username: &str,
         peername: &str,
         address: &str,
         listen_port: u32,
         public_key: &str,
-        allowed_ips: &Vec<String>,
+        allowed_ips: &[String],
         persistent_keepalive: u32,
         endpoint: Option<String>,
         table: Option<u32>,
@@ -121,7 +122,7 @@ impl Peer {
             address: address.to_string(),
             listen_port,
             public_key: public_key.to_string(),
-            allowed_ips: allowed_ips.clone(),
+            allowed_ips: allowed_ips.to_vec(),
             persistent_keepalive,
             endpoint,
             table,

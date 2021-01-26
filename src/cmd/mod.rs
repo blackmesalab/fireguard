@@ -48,7 +48,7 @@ pub struct Fireguard {
 impl Fireguard {
     async fn pre_checks(&mut self) -> Result<()> {
         let config = Path::new(&self.config_dir);
-    if config.is_dir() {
+        if config.is_dir() {
             let mut args = env::args().collect::<Vec<String>>();
             debug!("Command line args: [{}]", args.join(", "));
             if args[0].starts_with("target/") {
@@ -58,7 +58,7 @@ impl Fireguard {
                 for (idx, arg) in args.iter().enumerate() {
                     if arg == "docker" {
                         args.remove(idx);
-                        break; 
+                        break;
                     }
                 }
             }
