@@ -105,7 +105,7 @@ impl UpgradeBin {
                         );
                     }
                 }
-                info!("Sleeping for {} seconds", wait_duration.as_secs());
+                debug!("Sleeping for {} seconds", wait_duration.as_secs());
                 time::sleep(wait_duration).await;
             }
         });
