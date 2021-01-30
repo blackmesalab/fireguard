@@ -1,3 +1,5 @@
+//! THIS IS NOT WORKING, AND NEEDS A LOT OF THOUGHS AND LOVE.
+
 use clap::Clap;
 use color_eyre::eyre::{bail, Result};
 
@@ -49,7 +51,9 @@ impl Docker {
     pub async fn exec(&self, fg: &Fireguard) -> Result<()> {
         install_wireguard_kernel_module().await?;
         enforce_host_config().await?;
-        let args = fg.args.join(" ");
+        let mut fg_args = fg.args.clone();
+        fg_args.retain(|x| x != "docker");
+        let args = fg_args.join(" ");
         let mut docker_cmd = "run -t --rm --privileged --net=host".to_string();
         // TODO: document how to use volumes, especially if there are plans for custom paths.
         if let Some(volumes) = self.docker_volumes.as_ref() {
