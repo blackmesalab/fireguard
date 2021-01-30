@@ -3,10 +3,11 @@ use std::{env, process};
 
 use clap::Clap;
 use color_eyre::eyre::{bail, Result};
+use futures::stream::StreamExt;
 use nix::sys::signal;
 use nix::unistd::Pid;
 use signal_hook::consts::signal::*;
-use signal_hook::iterator::Signals;
+use signal_hook_tokio::Signals;
 use tokio::{fs, task};
 
 use crate::cmd::peer::List;
@@ -88,17 +89,24 @@ pub struct Serve {
 impl Command for Serve {}
 impl Serve {
     async fn handle_signals(&self, config: Config, repository: String) -> Result<()> {
-        let mut signals = Signals::new(&[SIGTERM, SIGINT])?;
+        let signals = Signals::new(&[SIGHUP, SIGTERM, SIGINT, SIGQUIT])?;
+        let mut signals = signals.fuse();
         let t = task::spawn(async move {
-            for sig in signals.forever() {
-                warn!("Received signal {:#?}, shutting down Fireguard", sig);
-                let down = Down {};
-                down.exec(None, &repository).await.unwrap_or_else(|_| error!("Unable to shut down Wireguard"));
-                config
-                    .remove_pid_file("fireguard")
-                    .await
-                    .unwrap_or_else(|_| error!("Unable to remove PID file for wireguard"));
-                break;
+            while let Some(signal) = signals.next().await {
+                match signal {
+                    SIGHUP => {}
+                    SIGTERM | SIGINT | SIGQUIT => {
+                        warn!("Received signal {:#?}, shutting down Fireguard", signal);
+                        let down = Down {};
+                        down.exec(None, &repository).await.unwrap_or_else(|_| error!("Unable to shut down Wireguard"));
+                        config
+                            .remove_pid_file("fireguard")
+                            .await
+                            .unwrap_or_else(|_| error!("Unable to remove PID file for wireguard"));
+                        break;
+                    }
+                    _ => error!("Signal {:?} is not handled", signal),
+                }
             }
         });
         t.await?;
@@ -109,7 +117,7 @@ impl Serve {
         let upgrade = UpgradeBin::new(
             Duration::from_secs(self.wait_between_checks),
             &self.release_url,
-            env!("CARGO_PKG_VERSION"),
+            &format!("v{}", env!("CARGO_PKG_VERSION")),
         );
         if let Some(pid) = fg.old_pid.as_ref() {
             let pid = pid.parse::<i32>()?;
@@ -133,11 +141,10 @@ impl Serve {
         let config = self.load_config(repository, &fg.config_dir, &fg.config_file).await?;
         let up = Up {};
         up.exec(None, repository).await?;
-        let repository_name = repository.to_owned();
         config.write_pid_file("fireguard", process::id()).await?;
         upgrade.run_in_background(&fg.args).await?;
         info!("Fireguard daemon started successfully");
-        self.handle_signals(config, repository_name).await?;
+        self.handle_signals(config, repository.to_string()).await?;
         Ok(())
     }
 }

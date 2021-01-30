@@ -12,6 +12,7 @@ crossbeam-channel = "0.4"
 color-eyre = "0.5"
 env_logger = "0.8"
 fork = "0.1"
+futures = "0.3"
 futures-util = "0.3"
 guess_host_triple = "0.1"
 ipnet = "2.3"
@@ -26,6 +27,7 @@ read_input = "0.8"
 reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 signal-hook = "0.3"
+signal-hook-tokio = { version = "0.3", features = ["futures-v0_3"] }
 tera = "1"
 tokio = { version = "1", features = ["full"] }
 tokio-stream = { version = "0.1", features = ["io-util", "time", "fs", "net", "default"] }

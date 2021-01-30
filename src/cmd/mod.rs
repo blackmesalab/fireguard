@@ -54,14 +54,6 @@ impl Fireguard {
             if args[0].starts_with("target/") {
                 args.remove(0);
             }
-            if Path::new("/.dockerenv").exists() {
-                for (idx, arg) in args.iter().enumerate() {
-                    if arg == "docker" {
-                        args.remove(idx);
-                        break;
-                    }
-                }
-            }
             debug!("Command line args after sanification: [{}]", args.join(", "));
             self.args = args;
             Ok(())
@@ -83,7 +75,6 @@ impl Fireguard {
             Action::Peer(ref action) => action.exec(self).await?,
             Action::Wg(ref action) => action.exec(self).await?,
             Action::Dns(ref action) => action.exec(self).await?,
-            Action::Docker(ref action) => action.exec(self).await?,
             Action::Daemon(ref action) => action.exec(self).await?,
         }
         Ok(())
@@ -100,8 +91,6 @@ pub enum Action {
     Wg(Wg),
     /// DNS management
     Dns(Dns),
-    /// Docker management
-    Docker(Docker),
     /// Daemon management
     Daemon(Daemon),
 }
