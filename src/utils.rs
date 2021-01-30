@@ -97,7 +97,6 @@ pub fn build_reqwest_client(connect_timeout: Option<Duration>, request_timeout: 
         .user_agent(USER_AGENT)
         .connect_timeout(connect_timeout.unwrap_or_else(|| Duration::from_millis(1500)))
         .timeout(request_timeout.unwrap_or_else(|| Duration::from_millis(20000)))
-        .local_address(IpAddr::from([127, 0, 0, 1]))
         .no_proxy()
         .build()?)
 }
