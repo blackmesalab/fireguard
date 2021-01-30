@@ -26,7 +26,7 @@ pub struct Releases {
     pub tag_name: String,
     #[serde(rename = "target_commitish")]
     pub target_commitish: String,
-    pub name: String,
+    pub name: Option<String>,
     pub draft: bool,
     pub prerelease: bool,
     #[serde(rename = "created_at")]
@@ -38,7 +38,7 @@ pub struct Releases {
     pub tarball_url: String,
     #[serde(rename = "zipball_url")]
     pub zipball_url: String,
-    pub body: String,
+    pub body: Option<String>,
     #[serde(skip_serializing, skip_deserializing)]
     pub http_cli: Client,
 }
