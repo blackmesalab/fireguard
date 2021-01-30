@@ -180,7 +180,7 @@ pub struct Remove {
 
 impl Command for Remove {}
 impl Remove {
-    pub async fn exec(&self, _fg: &Fireguard, mut config: Config, repository: &str) -> Result<()> {
+    pub async fn exec(&self, fg: &Fireguard, mut config: Config, repository: &str) -> Result<()> {
         let peer = config.remove_peer(&format!("{}-{}", self.username, self.peername));
         match peer {
             Some(_) => {
@@ -190,6 +190,7 @@ impl Remove {
                 warn!("Peer {}-{} not found in repository {}", self.username, self.peername, repository);
             }
         }
+        config.save(&self.config_file(repository, &fg.config_dir, &fg.config_file)).await?;
         Ok(())
     }
 }
