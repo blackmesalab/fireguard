@@ -1,0 +1,73 @@
+name: release
+
+on:
+  release:
+    types:
+      - created
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  build-release:
+    name: build-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build:
+          - linux glib amd64
+          - linux glib arm7
+          - linux glib arm64
+          - macos x64
+        include:
+          - build: linux glib amd64
+            os: ubuntu-latest
+            rust: stable
+            target: x86_64-unknown-linux-gnu
+          - build: linux glib arm7
+            os: ubuntu-latest
+            rust: stable
+            target: armv7-unknown-linux-gnueabihf
+          - build: linux glib arm64
+            os: ubuntu-latest
+            rust: stable
+            target: aarch64-unknown-linux-gnu
+          - build: macos x64
+            os: macos-latest
+            rust: stable
+            target: x86_64-apple-darwin
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          profile: minimal
+          override: true
+          target: ${{ matrix.target }}
+
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --target ${{ matrix.target }} --release
+
+      - name: Tar release (unix)
+        if: matrix.os != 'windows-2019'
+        working-directory: ./target/${{ matrix.target }}/release
+        run: tar cvfz bandwhich-v${{ github.event.release.tag_name }}-${{matrix.target}}.tar.gz "fireguard"
+        
+      - name: Upload release archive (linux)
+        if: matrix.os != 'windows-2019'
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./target/${{ matrix.target }}/release/bandwhich-v${{ github.event.release.tag_name }}-${{matrix.target}}.tar.gz
+          asset_name: bandwhich-v${{ github.event.release.tag_name }}-${{matrix.target}}.tar.gz
+          asset_content_type: application/octet-stream

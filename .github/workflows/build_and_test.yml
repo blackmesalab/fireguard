@@ -49,19 +49,3 @@ jobs:
 
       - name: Run tests
         run: cargo test --verbose
-
-      - name: Upload unix binary
-        if: matrix.os != 'windows-2019'
-        uses: actions/upload-artifact@v1
-        with:
-          name: ${{ matrix.os }}-${{ matrix.rust }}
-          path: target/debug/fireguard
-
-      - name: Upload windows binary
-        if: matrix.os == 'windows-2019'
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ matrix.os }}-${{ matrix.rust }}
-          path: |
-            target/debug/fireguard.exe
-            target/debug/fireguard.pdb
