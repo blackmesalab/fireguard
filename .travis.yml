@@ -18,6 +18,7 @@ jobs:
     - env: TARGET=armv7-unknown-linux-gnueabihf DISABLE_TESTS=1
 
 before_install:
+  - echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USER" --password-stdin
   - set -e
   - rustup self update
 
