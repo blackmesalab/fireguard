@@ -1,9 +1,10 @@
 name: release
 
 on:
-  release:
-    types:
-      - created
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
 env:
   CARGO_TERM_COLOR: always
@@ -60,7 +61,7 @@ jobs:
         if: matrix.os != 'windows-2019'
         working-directory: ./target/${{ matrix.target }}/release
         run: tar cvfz bandwhich-v${{ github.event.release.tag_name }}-${{matrix.target}}.tar.gz "fireguard"
-        
+
       - name: Upload release archive (linux)
         if: matrix.os != 'windows-2019'
         uses: actions/upload-release-asset@v1.0.1
