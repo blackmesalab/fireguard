@@ -36,8 +36,9 @@ tag: debug
 	@echo "$(CHANGELOG)" >> CHANGELOG.md
 	@echo "######################### End $(VERSION) changelog ###################" >> CHANGELOG.md
 	vim CHANGELOG.md
-	git add CHANGELOG.md
-	git commit CHANGELOG.md
+	cargo fmt
+	git add *
+	git commit -a
 	git tag v$(VERSION)
 
 docker_prepare:

@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use tokio::{fs, io::AsyncWriteExt};
 
 use crate::shell::Shell;
-use crate::utils::{build_reqwest_client, current_executable_path, NEW_VERSION_PATH, NEW_VERSION_FILE};
+use crate::utils::{build_reqwest_client, current_executable_path, NEW_VERSION_FILE, NEW_VERSION_PATH};
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
