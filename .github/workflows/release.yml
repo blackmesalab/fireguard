@@ -11,6 +11,23 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
+  create_release:
+    name: create-release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
   build-release:
     name: build-release
     runs-on: ${{ matrix.os }}
@@ -51,7 +68,8 @@ jobs:
           override: true
           target: ${{ matrix.target }}
 
-      - uses: actions-rs/cargo@v1
+      - name: Build release
+        uses: actions-rs/cargo@v1
         with:
           use-cross: true
           command: build
@@ -62,24 +80,13 @@ jobs:
         working-directory: ./target/${{ matrix.target }}/release
         run: tar cvfz fireguard-v${{ github.event.release.tag_name }}-${{matrix.target}}.tar.gz "fireguard"
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-
-      - name: Upload release archive (linux)
+      - name: Upload release archive (unix)
         if: matrix.os != 'windows-2019'
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/${{ matrix.target }}/release/fireguard-v${{ github.event.release.tag_name }}-${{matrix.target}}.tar.gz
-          asset_name: fireguard-v${{ github.event.release.tag_name }}-${{matrix.target}}.tar.gz
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: ./target/${{ matrix.target }}/release/fireguard-v${{ needs.create_release.tag_name }}-${{matrix.target}}.tar.gz
+          asset_name: fireguard-v${{ needs.create_release.tag_name }}-${{matrix.target}}.tar.gz
           asset_content_type: application/octet-stream
