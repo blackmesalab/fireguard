@@ -1,6 +1,7 @@
 # 📰 Changelog 📰
 
 - [Version 0.0.10](#version-0.0.10)
+- [Version 0.0.11](#version-0.0.11)
 - [Version 0.0.9](#version-0.0.9)
 - [Version 0.0.8](#version-0.0.8)
 - [Version 0.0.7](#version-0.0.7)
@@ -10,6 +11,10 @@
 - [Version 0.0.3](#version-0.0.3)
 - [Version 0.0.2](#version-0.0.2)
 - [Version 0.0.1](#version-0.0.1)
+
+## Version 0.0.11
+* 71131bc I think live reload now works 
+* c2f616c Update make tag
 
 ## Version 0.0.10
 * 962f973 Release version 0.0.10 
