@@ -79,7 +79,7 @@ jobs:
       - name: Tar release (unix)
         if: matrix.os != 'windows-2019'
         working-directory: ./target/${{ matrix.target }}/release
-        run: tar cvfz fireguard-v${{ github.event.release.tag_name }}-${{matrix.target}}.tar.gz "fireguard"
+        run: tar cvfz fireguard-${{ matrix.target }}.tar.gz "fireguard"
 
       - name: Upload release archive (unix)
         if: matrix.os != 'windows-2019'
@@ -88,6 +88,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./target/${{ matrix.target }}/release/fireguard-v${{ needs.create-release.tag_name }}-${{ matrix.target }}.tar.gz
-          asset_name: fireguard-v${{ needs.create-release.tag_name }}-${{ matrix.target }}.tar.gz
+          asset_path: ./target/${{ matrix.target }}/release/fireguard-${{ matrix.target }}.tar.gz
+          asset_name: fireguard-${{ matrix.target }}.tar.gz
           asset_content_type: application/octet-stream
