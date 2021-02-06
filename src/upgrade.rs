@@ -12,11 +12,7 @@ use tokio::task;
 use tokio::time;
 
 use crate::github::Releases;
-
-lazy_static! {
-    pub static ref NEW_VERSION_PATH: PathBuf = env::temp_dir();
-    pub static ref NEW_VERSION_FILE: PathBuf = NEW_VERSION_PATH.join("fireguard");
-}
+use crate::utils::{NEW_VERSION_FILE, NEW_VERSION_PATH};
 
 pub struct UpgradeBin {
     wait_between_checks: Duration,
@@ -51,17 +47,20 @@ impl UpgradeBin {
                             );
                         } else {
                             info!("Fireguard needs to be updated from {} to {}", self.current_tag, tag_name);
-                            match releases.download(&tag_name).await {
+                            match releases.download().await {
                                 Ok(()) => match fork::daemon(true, true) {
                                     Ok(fork::Fork::Child) => {
                                         let mut cmd_args = vec!["--old-pid".to_string(), process::id().to_string()];
-                                        cmd_args.extend(task_args.clone());
-                                        match Command::new(NEW_VERSION_PATH.as_path()).args(cmd_args).spawn() {
+                                        let mut task_args = task_args.clone();
+                                        task_args.remove(0);
+                                        cmd_args.extend(task_args);
+                                        warn!("Cmd args are {:?}", cmd_args);
+                                        match Command::new(NEW_VERSION_FILE.as_path()).args(cmd_args).spawn() {
                                             Ok(command) => match command.wait_with_output() {
                                                 Ok(output) => {
                                                     info!(
                                                         "Forked new executable from {}: {}",
-                                                        NEW_VERSION_PATH.display(),
+                                                        NEW_VERSION_FILE.display(),
                                                         String::from_utf8_lossy(&output.stdout)
                                                     );
                                                     break;
@@ -73,7 +72,7 @@ impl UpgradeBin {
                                             Err(e) => {
                                                 error!(
                                                     "Error forking new executable from {}: {}",
-                                                    NEW_VERSION_PATH.display(),
+                                                    NEW_VERSION_FILE.display(),
                                                     e
                                                 );
                                             }
@@ -113,8 +112,8 @@ impl UpgradeBin {
     }
 
     pub async fn flip_binary_on_disk(&self, destination: PathBuf) -> Result<()> {
-        info!("Copying {} to {}", NEW_VERSION_PATH.display(), destination.display());
-        let bytes = fs::copy(NEW_VERSION_PATH.as_path(), &destination).await?;
+        info!("Copying {} to {}", NEW_VERSION_FILE.display(), destination.display());
+        let bytes = fs::copy(NEW_VERSION_FILE.as_path(), &destination).await?;
         info!("Copied {} bytes executable to {}", bytes, destination.display());
         Ok(())
     }

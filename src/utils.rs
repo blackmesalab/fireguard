@@ -1,4 +1,5 @@
 use std::env;
+use std::path::PathBuf;
 use std::net::IpAddr;
 use std::process;
 use std::time::Duration;
@@ -11,6 +12,11 @@ use crate::shell::Shell;
 
 pub const APT_PACKAGES_HOST: &str = "bc wireguard wireguard-dkms wireguard-tools git";
 pub static USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
+
+lazy_static! {
+    pub static ref NEW_VERSION_PATH: PathBuf = current_executable_path().unwrap();
+    pub static ref NEW_VERSION_FILE: PathBuf = NEW_VERSION_PATH.join(".fireguard");
+}
 
 pub fn setup_logging(debug: bool) {
     let level = if debug { LevelFilter::Debug } else { LevelFilter::Info };
@@ -88,6 +94,19 @@ pub async fn enforce_host_config() -> Result<()> {
             Ok(())
         } else {
             bail!("Unable to activate ipv4 forward: ");
+        }
+    }
+}
+
+pub fn current_executable_path() -> Result<PathBuf> {
+    let current_exe = env::current_exe()?;
+    match current_exe.parent() {
+        Some(parent) => {
+            info!("Current fireguard executable is located in {}", parent.display());
+            Ok(parent.to_owned())
+        }
+        None => {
+            bail!("Unable to find current executable {} parent path", current_exe.display());
         }
     }
 }

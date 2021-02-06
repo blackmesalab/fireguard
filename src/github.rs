@@ -1,3 +1,7 @@
+use std::env;
+use std::fs as std_fs;
+use std::os::unix::fs::PermissionsExt;
+
 use color_eyre::eyre::{bail, Result};
 use guess_host_triple::guess_host_triple;
 use reqwest::Client;
@@ -5,8 +9,7 @@ use serde::{Deserialize, Serialize};
 use tokio::{fs, io::AsyncWriteExt};
 
 use crate::shell::Shell;
-use crate::upgrade::{NEW_VERSION_FILE, NEW_VERSION_PATH};
-use crate::utils::build_reqwest_client;
+use crate::utils::{build_reqwest_client, current_executable_path, NEW_VERSION_PATH, NEW_VERSION_FILE};
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -151,26 +154,31 @@ impl Releases {
         Ok(releases)
     }
 
-    pub async fn download_for_triple(self, triple: &str, tag_name: &str) -> Result<()> {
-        let tar_file = format!("fireguard-{}-{}.tar.gz", tag_name, triple);
+    pub async fn download_for_triple(self, triple: &str) -> Result<()> {
+        let tar_file = format!("fireguard-{}.tar.gz", triple);
         let asset = self.assets.into_iter().find(|a| a.name == tar_file);
         match asset {
             Some(asset) => {
                 let data = self.http_cli.get(&asset.browser_download_url).send().await?.bytes().await?;
                 info!("Downloaded new version {} from {}", self.tag_name, asset.browser_download_url);
-                let filename = NEW_VERSION_PATH.join(asset.name);
+                let tmp_path = env::temp_dir();
+                let filename = tmp_path.join(asset.name);
                 let mut file = fs::File::create(&filename).await?;
                 file.write_all(&data).await?;
-                info!("Stored new version {} on {}", self.tag_name, filename.display());
+                info!("Downloaded new version {} on {}", self.tag_name, filename.display());
                 let result = Shell::exec(
                     "tar",
                     &format!("xfvz {}", tar_file),
-                    Some(NEW_VERSION_PATH.to_str().unwrap_or_default()),
+                    Some(tmp_path.to_str().unwrap_or_default()),
                     false,
                 )
                 .await;
                 if result.success() {
-                    info!("Exracted new version {} on {}", self.tag_name, NEW_VERSION_FILE.display());
+                    fs::copy(&tmp_path.join("fireguard"), NEW_VERSION_FILE.as_path()).await?;
+                    info!("Exracted new version {} in {}", self.tag_name, NEW_VERSION_FILE.display());
+                    let mut perms = std_fs::metadata(NEW_VERSION_FILE.as_path())?.permissions();
+                    perms.set_mode(0o755);
+                    std_fs::set_permissions(NEW_VERSION_FILE.as_path(), perms)?;
                 } else {
                     bail!(
                         "Unable to extractract new version {} on {}: {}",
@@ -185,7 +193,7 @@ impl Releases {
         Ok(())
     }
 
-    pub async fn download(self, tag_name: &str) -> Result<()> {
+    pub async fn download(self) -> Result<()> {
         let host_triple = match guess_host_triple() {
             Some(t) => {
                 info!("Found rustc triple for current host: {}", t);
@@ -193,6 +201,6 @@ impl Releases {
             }
             None => bail!("Unable to find rustc host triple for current intallation"),
         };
-        Ok(self.download_for_triple(host_triple, tag_name).await?)
+        Ok(self.download_for_triple(host_triple).await?)
     }
 }
