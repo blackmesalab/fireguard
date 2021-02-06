@@ -47,10 +47,11 @@ impl UpgradeBin {
                             );
                         } else {
                             info!("Fireguard needs to be updated from {} to {}", self.current_tag, tag_name);
+                            let old_pid = process::id();
                             match releases.download().await {
                                 Ok(()) => match fork::daemon(true, true) {
                                     Ok(fork::Fork::Child) => {
-                                        let mut cmd_args = vec!["--old-pid".to_string(), process::id().to_string()];
+                                        let mut cmd_args = vec!["--old-pid".to_string(), old_pid.to_string()];
                                         let mut task_args = task_args.clone();
                                         task_args.remove(0);
                                         cmd_args.extend(task_args);
