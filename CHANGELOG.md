@@ -1,5 +1,6 @@
 # 📰 Changelog 📰
 
+- [Version 0.0.10](#version-0.0.10)
 - [Version 0.0.9](#version-0.0.9)
 - [Version 0.0.8](#version-0.0.8)
 - [Version 0.0.7](#version-0.0.7)
@@ -9,6 +10,21 @@
 - [Version 0.0.3](#version-0.0.3)
 - [Version 0.0.2](#version-0.0.2)
 - [Version 0.0.1](#version-0.0.1)
+
+## Version 0.0.10
+* 962f973 Release version 0.0.10 
+* a6ac5d7 Remove release tag from asset filename 
+* 5e521a3 Use major version 1 for uploading release assets 
+* 7af20a9 Make build-release depends on create-release 
+* efe5323 Use the job output for the upload url in gh action 
+* b70bb76 Another small step to make gh release work 
+* 45bd540 Fix typo in github action 
+* 7426f83 Remove travis and allow publish on github releases 
+* a3b1e87 Match release using its name in CI 
+* b92300f Let's try to release some stuff 0dc8ad6 Make clippy less clippy 
+* 5f9ddb6 Fix format and rename workflow 9bedb23 Just build and test right now. 
+* ee5c678 Initial work to move away from greedy Travis 
+* ab50548 Try to overcome travis greed. Allow multiple tokio threads in current runtime 
 
 ## Version 0.0.9
 * 672cd37 Release version 0.0.9 
