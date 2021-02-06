@@ -1,6 +1,6 @@
 # 🔥 Fireguard 🔥 - A Wireguard based trust network
-[![Travis](https://img.shields.io/travis/blackmesalab/fireguard?style=for-the-badge)](https://travis-ci.org/github/blackmesalab/fireguard)
-[![Docker](https://img.shields.io/docker/v/blackmesalab/fireguard?sort=semver&style=for-the-badge)](https://hub.docker.com/r/blackmesalab/fireguard/)
+[![Release](https://img.shields.io/github/workflow/status/blackmesalab/fireguard/release?style=for-the-badge)](https://github.com/blackmesalab/fireguard/actions?query=workflow%3Arelease)
+[![Ci](https://img.shields.io/github/workflow/status/blackmesalab/fireguard/ci?style=for-the-badge)](https://github.com/blackmesalab/fireguard/actions?query=workflow%3Aci)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](https://github.com/crisidev/qrsync/blob/master/LICENSE)
 
 - [Install](#install)

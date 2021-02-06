@@ -1,6 +1,6 @@
 [package]
 name = "fireguard"
-version = "0.0.9"
+version = "0.0.10"
 authors = ["Bigo <bigo@crisidev.org>"]
 edition = "2018"
 
