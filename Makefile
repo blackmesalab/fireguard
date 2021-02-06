@@ -31,9 +31,9 @@ endif
 tag: debug
 	$(eval VERSION=$(shell target/debug/fireguard --version | sed 's#fireguard ##g'))
 	$(eval CHANGELOG=$(shell git log $(shell git describe --tags --abbrev=0)..HEAD --oneline))
-	@echo The changelog from the previous tag to $(VERSION) is:$(CHANGELOG)
+	@echo The changelog from the previous tag to $(VERSION) is:"$(CHANGELOG)"
 	@echo "######################### Start $(VERSION) changelog ###################" >> CHANGELOG.md
-	@echo $(CHANGELOG) >> CHANGELOG.md
+	@echo "$(CHANGELOG)" >> CHANGELOG.md
 	@echo "######################### End $(VERSION) changelog ###################" >> CHANGELOG.md
 	vim CHANGELOG.md
 	git add CHANGELOG.md
