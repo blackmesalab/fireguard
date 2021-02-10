@@ -142,7 +142,7 @@ impl Serve {
         let up = Up {};
         up.exec(None, repository).await?;
         config.write_pid_file("fireguard", process::id()).await?;
-        upgrade.run_in_background(&fg.args).await?;
+        // upgrade.run_in_background(&fg.args).await?;
         info!("Fireguard daemon started successfully");
         self.handle_signals(config, repository.to_string()).await?;
         Ok(())
